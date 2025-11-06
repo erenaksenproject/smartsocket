@@ -10,7 +10,7 @@
   #clock { font-size:18px; color:#cfcfcf; margin-top:6px; }
   #monitors { display:flex; flex-wrap:wrap; justify-content:center; padding:16px; gap:16px; }
   .monitor { background:#1f1f1f; border-radius:12px; padding:16px; min-width:280px; width:280px; box-shadow:0 4px 12px rgba(0,0,0,0.7); }
-  .hat-title { font-size:20px; font-weight:600; margin-bottom:10px; text-align:center; letter-spacing:1px; }
+  .Parametreler-title { font-size:20px; font-weight:600; margin-bottom:10px; text-align:center; letter-spacing:1px; }
   table { width:100%; border-collapse:collapse; }
   th, td { border:1px solid #333; padding:8px; text-align:center; font-size:14px; }
   th { background:#2a2a2a; }
@@ -29,7 +29,7 @@
 <div id="monitors"></div>
 
 <script>
-const monitors = ["monitor1","monitor2","monitor3","monitor4"];
+const monitors = ["Hat1","Hat2","Hat3","Hat4"];
 function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
 setInterval(updateClock,1000);
 
@@ -37,17 +37,17 @@ function createMonitorHTML(monitorId){
   const container = document.createElement("div");
   container.className="monitor"; container.id=monitorId;
 
-  const title = document.createElement("div"); title.className="hat-title"; title.innerText=monitorId.toUpperCase();
+  const title = document.createElement("div"); title.className="Parametreler-title"; title.innerText=monitorId.toUpperCase();
   container.appendChild(title);
 
   const table = document.createElement("table");
   const header = document.createElement("tr");
-  ["Hat","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{ const th=document.createElement("th"); th.innerText=h; header.appendChild(th); });
+  ["Parametreler","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{ const th=document.createElement("th"); th.innerText=h; header.appendChild(th); });
   table.appendChild(header);
 
   // Sadece Hat 1
-  const tr = document.createElement("tr"); tr.id=monitorId+"_hat1";
-  const tdHat = document.createElement("td"); tdHat.innerText="Hat 1"; tr.appendChild(tdHat);
+  const tr = document.createElement("tr"); tr.id=monitorId+"_Değerler";
+  const tdDeğerler = document.createElement("td"); tdDeğerler.innerText="Değerler"; tr.appendChild(tdDeğerler);
   for(let i=0;i<4;i++){
     const td=document.createElement("td"); td.innerHTML='<span class="val">-</span> <span class="led"></span>'; tr.appendChild(td);
   }
@@ -85,30 +85,30 @@ socket.addEventListener("message",(e)=>{
 
 function applyDataToUI(rootData){
   monitors.forEach(m=>{
-    const rowEl=document.getElementById(m+"_hat1");
+    const rowEl=document.getElementById(m+"_Değerler");
     const tds=rowEl.getElementsByTagName("td");
-    const hatData=rootData[m]?.hat1;
-    if(!hatData){
+    const ParametrelerData=rootData[m]?.Değerler;
+    if(!ParametrelerData){
       for(let i=1;i<=4;i++){ tds[i].querySelector(".val").innerText="-"; tds[i].querySelector(".led").style.background="gray"; }
       return;
     }
-    const temp=hatData.temperature?.value??null;
-    const tempAlert=hatData.temperature?.alert??false;
+    const temp=ParametrelerData.temperature?.value??null;
+    const tempAlert=ParametrelerData.temperature?.alert??false;
     tds[1].querySelector(".val").innerText=(temp===-1||temp===null)?"-":Number(temp).toFixed(1);
     tds[1].querySelector(".led").style.background=tempAlert?"red":"limegreen";
 
-    const cur=hatData.current?.value??null;
-    const curAlert=hatData.current?.alert??false;
+    const cur=ParametrelerData.current?.value??null;
+    const curAlert=ParametrelerData.current?.alert??false;
     tds[2].querySelector(".val").innerText=(cur===null)?"-":Number(cur).toFixed(2);
     tds[2].querySelector(".led").style.background=curAlert?"red":"limegreen";
 
-    const volt=hatData.voltage?.value??null;
-    const voltAlert=hatData.voltage?.alert??false;
+    const volt=ParametrelerData.voltage?.value??null;
+    const voltAlert=ParametrelerData.voltage?.alert??false;
     tds[3].querySelector(".val").innerText=(volt===null)?"-":Number(volt).toFixed(2);
     tds[3].querySelector(".led").style.background=voltAlert?"red":"limegreen";
 
-    const power=hatData.power?.value??null;
-    const powerAlert=hatData.power?.alert??false;
+    const power=ParametrelerData.power?.value??null;
+    const powerAlert=ParametrelerData.power?.alert??false;
     tds[4].querySelector(".val").innerText=(power===null)?"-":Number(power).toFixed(2);
     tds[4].querySelector(".led").style.background=powerAlert?"red":"limegreen";
   });
@@ -116,7 +116,7 @@ function applyDataToUI(rootData){
 
 function makeAllOffline(){
   monitors.forEach(m=>{
-    const rowEl=document.getElementById(m+"_hat1");
+    const rowEl=document.getElementById(m+"_Değerler");
     const tds=rowEl.getElementsByTagName("td");
     for(let i=1;i<=4;i++){ tds[i].querySelector(".val").innerText="-"; tds[i].querySelector(".led").style.background="gray"; }
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
