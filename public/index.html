@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Akıllı DC Güç Ünitesi</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; }
+  header { padding: 10px; text-align: center; background-color: #1f1f1f; font-size: 24px; font-weight: bold; }
+  #clock { font-size: 18px; color: #cfcfcf; margin-top:6px; }
+  .monitor { padding: 15px; margin: 10px; background-color: #1f1f1f; border-radius: 10px; display: inline-block; vertical-align: top; width: 28%; min-width:260px; box-sizing:border-box; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+  th { background-color: #2a2a2a; }
+  .alert { color: red; font-weight: bold; }
+  .ok { color: limegreen; }
+  .hat-title { font-size: 18px; margin-bottom: 5px; }
+  .led { width:12px; height:12px; border-radius:50%; display:inline-block; margin-left:8px; background:gray; vertical-align: middle; }
+  .offline-banner { color:#ffcc00; font-weight:700; margin-top:8px; text-align:center; }
+  @media (max-width:900px){ .monitor{ width: 48%; } }
+  @media (max-width:600px){ .monitor{ width: 98%; } }
+</style>
+</head>
+<body>
+<header>Akıllı DC Güç Ünitesi Monitörü
+  <div id="clock"></div>
+</header>
+
+<div id="content" style="padding:16px;">
+  <div id="monitors"></div>
+</div>
+
+<script>
+/* --------- UI oluşturma (mevcut yapıyı koruyacak) --------- */
+const monitors = ["monitor1","monitor2","monitor3","monitor4"];
+function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
+function createMonitorHTML(monitorId){
+  const container = document.createElement("div");
+  container.className = "monitor";
+  container.id = monitorId;
+
+  const title = document.createElement("div"); title.className="hat-title"; title.innerText = monitorId.toUpperCase();
+  container.appendChild(title);
+
+  const table = document.createElement("table");
+  const header = document.createElement("tr");
+  ["Hat", "Sıcaklık (°C)", "Akım (A)", "Gerilim (V)", "Güç (W)"].forEach(h => { const th = document.createElement("th"); th.innerText = h; header.appendChild(th); });
+  table.appendChild(header);
+
+  // Burada orijinal yapıyı koruyoruz: 4 hat satırı
+  for(let i=1;i<=4;i++){
+    const tr = document.createElement("tr"); tr.id = monitorId + "_hat" + i;
+    const tdHat = document.createElement("td"); tdHat.innerText = "Hat " + i; tr.appendChild(tdHat);
+    for(let j=0;j<4;j++){ const td = document.createElement("td"); td.innerHTML = '<span class="val">-</span> <span class="led" style="background:gray"></span>'; tr.appendChild(td); }
+    table.appendChild(tr);
+  }
+
+  container.appendChild(table);
+  const offlineDiv = document.createElement("div"); offlineDiv.className="offline-banner"; offlineDiv.id = monitorId + "_offline"; offlineDiv.innerText = "";
+  container.appendChild(offlineDiv);
+
+  document.getElementById("monitors").appendChild(container);
+}
+monitors.forEach(m => createMonitorHTML(m));
+setInterval(updateClock,1000);
+
+/* --------- WebSocket bağlantısı --------- */
+// ws/wss URL otomatik olarak aynı hosta bağlanacak (Render deploy edince çalışır)
+const protocol = (location.protocol === "https:") ? "wss:" : "ws:";
+const WS_URL = protocol + "//" + location.host; // örn: wss://<app>.onrender.com
+const socket = new WebSocket(WS_URL);
+
+const OFFLINE_THRESHOLD = 10000; // 10s
+let lastTs = 0;
+
+socket.addEventListener("open", ()=> console.log("WS bağlı"));
+socket.addEventListener("close", ()=> { console.log("WS kapandı"); makeAllOffline(); });
+
+// Gelen mesajları işle
+socket.addEventListener("message", (e) => {
+  try{
+    const msg = JSON.parse(e.data);
+    if(msg.type === "init" || msg.type === "update"){
+      const data = msg.data || {};
+      lastTs = msg.ts || Date.now();
+      applyDataToUI(data);
+      clearOfflineFlags();
+    } else if(msg.type === "offline"){
+      makeAllOffline();
+    }
+  }catch(err){ console.error("WS mesaj parse hatası", err); }
+});
+
+// UI güncelleme: gelen data yapısını esnek kabul eder (senin ESP payload'ına göre)
+function applyDataToUI(rootData){
+  // rootData beklenen yapı: monitor1: { hat1: { temperature: {value,alert}, ... } , ... } veya
+  // eğer farklıyse, fonksiyonu uyarlayacağız. Burada esnek davranıyoruz.
+  monitors.forEach(m=>{
+    for(let i=1;i<=4;i++){
+      const rowEl = document.getElementById(m + "_hat" + i);
+      const tds = rowEl.getElementsByTagName("td");
+      const hatKey = "hat"+i;
+      const hatData = (rootData[m] && rootData[m][hatKey]) ? rootData[m][hatKey] : null;
+      if(!hatData){
+        // eğer veri yoksa cell'leri "-" yap
+        for(let c=1;c<=4;c++){ tds[c].querySelector(".val").innerText = "-"; tds[c].querySelector(".led").style.background="gray"; }
+        continue;
+      }
+      // sıcaklık
+      const temp = hatData.temperature?.value ?? null;
+      const tempAlert = hatData.temperature?.alert ?? false;
+      tds[1].querySelector(".val").innerText = (temp===-1 || temp===null)? "-" : Number(temp).toFixed(1);
+      tds[1].querySelector(".led").style.background = tempAlert ? "red" : "limegreen";
+
+      // akım
+      const cur = hatData.current?.value ?? null;
+      const curAlert = hatData.current?.alert ?? false;
+      tds[2].querySelector(".val").innerText = (cur===null) ? "-" : Number(cur).toFixed(2);
+      tds[2].querySelector(".led").style.background = curAlert ? "red" : "limegreen";
+
+      // gerilim
+      const volt = hatData.voltage?.value ?? null;
+      const voltAlert = hatData.voltage?.alert ?? false;
+      tds[3].querySelector(".val").innerText = (volt===null) ? "-" : Number(volt).toFixed(2);
+      tds[3].querySelector(".led").style.background = voltAlert ? "red" : "limegreen";
+
+      // güç
+      const power = hatData.power?.value ?? null;
+      const powerAlert = hatData.power?.alert ?? false;
+      tds[4].querySelector(".val").innerText = (power===null) ? "-" : Number(power).toFixed(2);
+      tds[4].querySelector(".led").style.background = powerAlert ? "red" : "limegreen";
+    }
+  });
+}
+
+function makeAllOffline(){
+  monitors.forEach(m=>{
+    for(let i=1;i<=4;i++){
+      const rowEl = document.getElementById(m + "_hat" + i);
+      const tds = rowEl.getElementsByTagName("td");
+      for(let c=1;c<=4;c++){ tds[c].querySelector(".val").innerText = "-"; tds[c].querySelector(".led").style.background="gray"; }
+    }
+    document.getElementById(m + "_offline").innerText = "Bağlantı yok";
+  });
+}
+
+function clearOfflineFlags(){
+  monitors.forEach(m => document.getElementById(m + "_offline").innerText = "");
+}
+
+// Eğer WebSocket'ten veri gelmiyorsa, periyodik kontrol ile offline yap
+setInterval(()=>{
+  if(Date.now() - lastTs > OFFLINE_THRESHOLD) makeAllOffline();
+}, 2000);
+</script>
+</body>
+</html>
