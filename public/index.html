@@ -2,38 +2,58 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Akıllı DC Güç Ünitesi</title>
+<title>Akıllı DC Güç Ünitesi - Pro</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
   body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin:0; padding:0; }
-  header { padding: 12px 0; text-align:center; background:#1f1f1f; font-size:26px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.5);}
-  #clock { font-size:18px; color:#cfcfcf; margin-top:6px; }
+  header { padding: 12px 16px; text-align:center; background:#1f1f1f; font-size:26px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.5); display:flex; justify-content:space-between; align-items:center; }
+  #clock { font-size:18px; color:#cfcfcf; }
+  #connection { width:14px; height:14px; border-radius:50%; display:inline-block; margin-left:8px; background:gray; }
   #monitors { display:flex; flex-wrap:wrap; justify-content:center; padding:16px; gap:16px; }
-  .monitor { background:#1f1f1f; border-radius:12px; padding:16px; min-width:280px; width:280px; box-shadow:0 4px 12px rgba(0,0,0,0.7); }
+  .monitor { background:#1f1f1f; border-radius:12px; padding:16px; min-width:280px; width:280px; box-shadow:0 4px 12px rgba(0,0,0,0.7); position:relative; transition:0.3s; }
+  .monitor.alarm { box-shadow:0 0 12px 2px rgba(255,0,0,0.6); }
   .hat-title { font-size:20px; font-weight:600; margin-bottom:10px; text-align:center; letter-spacing:1px; }
   table { width:100%; border-collapse:collapse; }
   th, td { border:1px solid #333; padding:8px; text-align:center; font-size:14px; }
   th { background:#2a2a2a; }
   .val { font-weight:500; }
   .led { width:14px; height:14px; border-radius:50%; display:inline-block; margin-left:6px; vertical-align:middle; background:gray; transition:0.3s; }
+  .led.pulse { animation: pulse 0.5s ease; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
   .offline-banner { color:#ffcc00; font-weight:700; margin-top:12px; text-align:center; font-size:14px; }
+  footer { padding:10px 16px; text-align:right; font-size:12px; color:#cfcfcf; border-top:1px solid #333; }
+  .tooltip { position:relative; cursor:pointer; }
+  .tooltip:hover::after { content: attr(data-tooltip); position:absolute; bottom:125%; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:4px 6px; border-radius:4px; font-size:12px; white-space:nowrap; z-index:10; }
   @media(max-width:900px){ #monitors{justify-content:space-around;} }
   @media(max-width:600px){ #monitors{flex-direction:column; align-items:center;} }
 </style>
 </head>
 <body>
-<header>Akıllı DC Güç Ünitesi Monitörü
-  <div id="clock"></div>
+<header>
+  <div>Akıllı DC Güç Ünitesi Monitörü</div>
+  <div>
+    <span id="clock"></span>
+    <span id="connection"></span>
+  </div>
 </header>
 
 <div id="monitors"></div>
+<footer>Son Güncelleme: <span id="lastUpdate">-</span></footer>
 
 <script>
 const monitors = ["monitor1","monitor2","monitor3","monitor4"];
-function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
+const OFFLINE_THRESHOLD = 10000;
+let lastTs=0;
+
+// Saat ve bağlantı simgesi
+function updateClock(){ 
+  document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+  const conn = document.getElementById("connection");
+  conn.style.background = (Date.now() - lastTs > OFFLINE_THRESHOLD) ? "gray" : "limegreen";
+}
 setInterval(updateClock,1000);
 
-function createMonitorHTML(monitorId){
+function createMonitorHTML(monitorId, hatNumber){
   const container = document.createElement("div");
   container.className="monitor"; container.id=monitorId;
 
@@ -42,14 +62,21 @@ function createMonitorHTML(monitorId){
 
   const table = document.createElement("table");
   const header = document.createElement("tr");
-  ["Hat","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{ const th=document.createElement("th"); th.innerText=h; header.appendChild(th); });
+  ["Hat","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{
+    const th=document.createElement("th"); th.innerText=h; header.appendChild(th);
+  });
   table.appendChild(header);
 
-  // Sadece Hat 1
   const tr = document.createElement("tr"); tr.id=monitorId+"_hat1";
-  const tdHat = document.createElement("td"); tdHat.innerText="Hat 1"; tr.appendChild(tdHat);
+  const tdHat = document.createElement("td"); 
+  tdHat.innerText="Hat " + hatNumber; 
+  tdHat.className="tooltip"; 
+  tdHat.dataset.tooltip = "Limitler: Temp 80°C, Akım 1.8A, Voltaj 11-13V"; 
+  tr.appendChild(tdHat);
   for(let i=0;i<4;i++){
-    const td=document.createElement("td"); td.innerHTML='<span class="val">-</span> <span class="led"></span>'; tr.appendChild(td);
+    const td=document.createElement("td"); 
+    td.innerHTML='<span class="val">-</span> <span class="led"></span>'; 
+    tr.appendChild(td);
   }
   table.appendChild(tr);
   container.appendChild(table);
@@ -59,15 +86,12 @@ function createMonitorHTML(monitorId){
 
   document.getElementById("monitors").appendChild(container);
 }
-monitors.forEach(m=>createMonitorHTML(m));
+monitors.forEach((m,i)=>createMonitorHTML(m, i+1));
 
-/* -------- WebSocket -------- */
+/* WebSocket */
 const protocol = (location.protocol==="https:")?"wss:":"ws:";
 const WS_URL = protocol+"//"+location.host;
 const socket = new WebSocket(WS_URL);
-
-const OFFLINE_THRESHOLD = 10000;
-let lastTs=0;
 
 socket.addEventListener("open",()=>console.log("WS bağlı"));
 socket.addEventListener("close",()=>{ console.log("WS kapandı"); makeAllOffline(); });
@@ -78,44 +102,56 @@ socket.addEventListener("message",(e)=>{
     if(msg.type==="init" || msg.type==="update"){
       lastTs=msg.ts||Date.now();
       applyDataToUI(msg.data||{});
+      document.getElementById("lastUpdate").innerText = new Date(lastTs).toLocaleTimeString();
       clearOfflineFlags();
     } else if(msg.type==="offline"){ makeAllOffline(); }
   }catch(err){ console.error("WS mesaj parse hatası",err); }
 });
 
 function applyDataToUI(rootData){
-  monitors.forEach(m=>{
+  monitors.forEach((m,i)=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
-    const hatData=rootData[m]?.hat1;
+    const hatKey = "hat1";
+    const hatData=rootData[m]?.[hatKey];
+    let alarmFlag = false;
     if(!hatData){
       for(let i=1;i<=4;i++){ tds[i].querySelector(".val").innerText="-"; tds[i].querySelector(".led").style.background="gray"; }
       return;
     }
+
+    // Sıcaklık
     const temp=hatData.temperature?.value??null;
     const tempAlert=hatData.temperature?.alert??false;
     tds[1].querySelector(".val").innerText=(temp===-1||temp===null)?"-":Number(temp).toFixed(1);
-    tds[1].querySelector(".led").style.background=tempAlert?"red":"limegreen";
+    const led1 = tds[1].querySelector(".led"); led1.style.background=tempAlert?"red":"limegreen"; if(tempAlert){ led1.classList.add("pulse"); alarmFlag=true; } else { led1.classList.remove("pulse"); }
 
+    // Akım
     const cur=hatData.current?.value??null;
     const curAlert=hatData.current?.alert??false;
     tds[2].querySelector(".val").innerText=(cur===null)?"-":Number(cur).toFixed(2);
-    tds[2].querySelector(".led").style.background=curAlert?"red":"limegreen";
+    const led2 = tds[2].querySelector(".led"); led2.style.background=curAlert?"red":"limegreen"; if(curAlert){ led2.classList.add("pulse"); alarmFlag=true; } else { led2.classList.remove("pulse"); }
 
+    // Voltaj
     const volt=hatData.voltage?.value??null;
     const voltAlert=hatData.voltage?.alert??false;
     tds[3].querySelector(".val").innerText=(volt===null)?"-":Number(volt).toFixed(2);
-    tds[3].querySelector(".led").style.background=voltAlert?"red":"limegreen";
+    const led3 = tds[3].querySelector(".led"); led3.style.background=voltAlert?"red":"limegreen"; if(voltAlert){ led3.classList.add("pulse"); alarmFlag=true; } else { led3.classList.remove("pulse"); }
 
+    // Güç
     const power=hatData.power?.value??null;
     const powerAlert=hatData.power?.alert??false;
     tds[4].querySelector(".val").innerText=(power===null)?"-":Number(power).toFixed(2);
-    tds[4].querySelector(".led").style.background=powerAlert?"red":"limegreen";
+    const led4 = tds[4].querySelector(".led"); led4.style.background=powerAlert?"red":"limegreen"; if(powerAlert){ led4.classList.add("pulse"); alarmFlag=true; } else { led4.classList.remove("pulse"); }
+
+    // Monitör kutusu alarm kenarı
+    const monDiv = document.getElementById(m);
+    if(alarmFlag){ monDiv.classList.add("alarm"); } else { monDiv.classList.remove("alarm"); }
   });
 }
 
 function makeAllOffline(){
-  monitors.forEach(m=>{
+  monitors.forEach((m,i)=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
     for(let i=1;i<=4;i++){ tds[i].querySelector(".val").innerText="-"; tds[i].querySelector(".led").style.background="gray"; }
