@@ -44,7 +44,6 @@
 
 <script>
 const monitors = ["Monitör1","Monitör2","Monitör3","Monitör4"];
-let firstDataReceived = false; // İlk veri alınıp alınmadığını takip eder
 
 function updateClock(){
   document.getElementById("clock").innerText = new Date().toLocaleTimeString();
@@ -79,7 +78,7 @@ function createMonitorHTML(monitorId, index){
 
   for(let i=0;i<4;i++){
     const td=document.createElement("td");
-    td.innerHTML='<span class="val">00.00</span> <span class="led"></span>';
+    td.innerHTML='<span class="val">-</span> <span class="led"></span>';
     tr.appendChild(td);
   }
   table.appendChild(tr);
@@ -88,7 +87,7 @@ function createMonitorHTML(monitorId, index){
   const offlineDiv=document.createElement("div");
   offlineDiv.className="offline-banner";
   offlineDiv.id=monitorId+"_offline";
-  offlineDiv.innerText="";
+  offlineDiv.innerText="Bağlantı yok";
   container.appendChild(offlineDiv);
 
   container.addEventListener("click",()=>{ container.classList.add("active"); setTimeout(()=>container.classList.remove("active"),500); });
@@ -110,30 +109,22 @@ const socket = new WebSocket(WS_URL);
 const OFFLINE_THRESHOLD = 10000;
 let lastTs=0;
 
-function startupEffect(){
+function resetMonitors(){
   monitors.forEach(m=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
-    tds.forEach(td=>{
-      const led = td.querySelector(".led");
-      if(led) led.style.background="limegreen";
-    });
+    for(let i=1;i<=4;i++){
+      tds[i].querySelector(".val").innerText="-";
+      tds[i].querySelector(".led").style.background="gray";
+    }
+    document.getElementById(m).classList.remove("alarm");
+    document.getElementById(m+"_offline").innerText="Bağlantı yok";
   });
-  setTimeout(()=>{
-    monitors.forEach(m=>{
-      const rowEl=document.getElementById(m+"_hat1");
-      const tds=rowEl.getElementsByTagName("td");
-      tds.forEach(td=>{
-        const led = td.querySelector(".led");
-        if(led) led.style.background="gray";
-      });
-    });
-  },800);
 }
 
 socket.addEventListener("open",()=>{
   document.getElementById("connection").style.background="limegreen";
-  startupEffect(); // Açılış efekti
+  resetMonitors(); // İlk bağlantıda monitörler temizleniyor, ikon yeşile dönüyor
 });
 
 socket.addEventListener("close",()=>{
@@ -147,21 +138,6 @@ socket.addEventListener("message",(e)=>{
       lastTs = msg.ts || Date.now();
       document.getElementById("lastUpdate").innerText = toFullDate(lastTs);
       document.getElementById("connection").style.background="limegreen";
-
-      // İlk veri gelmediyse 00.00'ları uygula
-      if(!firstDataReceived){
-        monitors.forEach(m=>{
-          const rowEl=document.getElementById(m+"_hat1");
-          const tds=rowEl.getElementsByTagName("td");
-          for(let j=1;j<=4;j++){
-            tds[j].querySelector(".val").innerText="00.00";
-            tds[j].querySelector(".led").style.background="gray";
-          }
-        });
-        firstDataReceived = true; // İlk veri gözardı edildi
-        return; // Bu veri işlenmez
-      }
-
       applyDataToUI(msg.data||{});
       clearOfflineFlags();
     }
@@ -180,7 +156,7 @@ function applyDataToUI(rootData){
 
     if(!hatData){
       for(let j=1;j<=4;j++){
-        tds[j].querySelector(".val").innerText="00.00";
+        tds[j].querySelector(".val").innerText="-";
         tds[j].querySelector(".led").style.background="gray";
       }
       container.classList.remove("alarm");
@@ -205,7 +181,7 @@ function updateCell(td, value, alert){
   const led=td.querySelector(".led");
 
   const oldValue = valSpan.innerText;
-  const newValue = (value===null || value===-1)?"00.00":Number(value).toFixed(2);
+  const newValue = (value===null || value===-1)?"-":Number(value).toFixed(2);
 
   if(oldValue!==newValue){
     valSpan.innerText=newValue;
@@ -220,7 +196,7 @@ function makeAllOffline(){
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
     for(let i=1;i<=4;i++){
-      tds[i].querySelector(".val").innerText="00.00";
+      tds[i].querySelector(".val").innerText="-";
       tds[i].querySelector(".led").style.background="gray";
     }
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
