@@ -44,6 +44,7 @@
 
 <script>
 const monitors = ["Monitör1","Monitör2","Monitör3","Monitör4"];
+let initialLoadDone = false; // İlk veri gelene kadar alarmı engellemek için
 
 function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
 setInterval(updateClock,1000);
@@ -107,13 +108,8 @@ const socket = new WebSocket(WS_URL);
 const OFFLINE_THRESHOLD = 10000;
 let lastTs=0;
 
-socket.addEventListener("open",()=>{
-  document.getElementById("connection").style.background="limegreen";
-});
-
-socket.addEventListener("close",()=>{
-  makeAllOffline();
-});
+socket.addEventListener("open",()=>{ document.getElementById("connection").style.background="limegreen"; });
+socket.addEventListener("close",()=>{ makeAllOffline(); });
 
 socket.addEventListener("message",(e)=>{
   try{
@@ -123,8 +119,11 @@ socket.addEventListener("message",(e)=>{
       lastTs = msg.ts || Date.now();
       document.getElementById("lastUpdate").innerText = toFullDate(lastTs);
       document.getElementById("connection").style.background="limegreen";
+
       applyDataToUI(msg.data||{});
       clearOfflineFlags();
+
+      if(!initialLoadDone){ initialLoadDone = true; } // İlk veri geldikten sonra artık alarm kontrolü yapılacak
     } else if(msg.type==="offline"){
       makeAllOffline();
     }
@@ -144,7 +143,7 @@ function applyDataToUI(rootData){
         tds[j].querySelector(".val").innerText="-";
         tds[j].querySelector(".led").style.background="gray";
       }
-      container.classList.remove("alarm");
+      if(initialLoadDone) container.classList.remove("alarm");
       return;
     }
 
@@ -153,10 +152,12 @@ function applyDataToUI(rootData){
     updateCell(tds[3], hatData.voltage?.value, hatData.voltage?.alert);
     updateCell(tds[4], hatData.power?.value, hatData.power?.alert);
 
-    if(hatData.temperature?.alert || hatData.current?.alert || hatData.voltage?.alert || hatData.power?.alert){
-      container.classList.add("alarm");
-    } else {
-      container.classList.remove("alarm");
+    if(initialLoadDone){
+      if(hatData.temperature?.alert || hatData.current?.alert || hatData.voltage?.alert || hatData.power?.alert){
+        container.classList.add("alarm");
+      } else {
+        container.classList.remove("alarm");
+      }
     }
   });
 }
@@ -183,19 +184,15 @@ function makeAllOffline(){
       tds[j].querySelector(".led").style.background="gray";
     }
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
-    document.getElementById(m).classList.remove("alarm");
+    if(initialLoadDone) document.getElementById(m).classList.remove("alarm");
   });
   document.getElementById("connection").style.background="red";
 }
 
-function clearOfflineFlags(){
-  monitors.forEach(m=>document.getElementById(m+"_offline").innerText="");
-}
+function clearOfflineFlags(){ monitors.forEach(m=>document.getElementById(m+"_offline").innerText=""); }
 
 setInterval(()=>{
-  if(Date.now()-lastTs > OFFLINE_THRESHOLD){
-    makeAllOffline();
-  }
+  if(Date.now()-lastTs > OFFLINE_THRESHOLD){ makeAllOffline(); }
 },2000);
 
 </script>
