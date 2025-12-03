@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
   body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin:0; padding:0; }
-  header { padding: 12px 0; display:flex; justify-content:center; align-items:center; gap:10px; background:#1f1f1f; font-size:26px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.5);}
+  header { padding: 12px 0; text-align:center; background:#1f1f1f; font-size:26px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; gap:10px; }
   #clock { font-size:18px; color:#cfcfcf; }
   #connection { width:14px; height:14px; border-radius:50%; background:red; display:inline-block; vertical-align:middle; }
 
@@ -44,23 +44,27 @@
 
 <script>
 const monitors = ["Monitör1","Monitör2","Monitör3","Monitör4"];
-let initialLoadDone = false; // İlk veri gelene kadar alarmı engellemek için
 
-function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
+function updateClock(){
+  document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+}
 setInterval(updateClock,1000);
 
-function createMonitorHTML(monitorId){
+function createMonitorHTML(monitorId, index){
   const container = document.createElement("div");
   container.className="monitor";
   container.id=monitorId;
 
   const title = document.createElement("div");
   title.className="hat-title";
+
   title.innerText = monitorId;
+
   container.appendChild(title);
 
   const table = document.createElement("table");
   const header = document.createElement("tr");
+
   ["Hat","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{
     const th=document.createElement("th");
     th.innerText=h;
@@ -72,7 +76,7 @@ function createMonitorHTML(monitorId){
   tr.id = monitorId + "_hat1";
 
   const tdHat = document.createElement("td");
-  tdHat.innerText = "Hat " + (monitors.indexOf(monitorId)+1);
+  tdHat.innerText = "Hat " + (index+1);
   tr.appendChild(tdHat);
 
   for(let i=0;i<4;i++){
@@ -89,12 +93,15 @@ function createMonitorHTML(monitorId){
   offlineDiv.innerText="Bağlantı yok";
   container.appendChild(offlineDiv);
 
-  container.addEventListener("click",()=>{ container.classList.add("active"); setTimeout(()=>container.classList.remove("active"),500); });
+  container.addEventListener("click",()=>{
+    container.classList.add("active");
+    setTimeout(()=>container.classList.remove("active"),500);
+  });
 
   document.getElementById("monitors").appendChild(container);
 }
 
-monitors.forEach((m)=>createMonitorHTML(m));
+monitors.forEach((m,i)=>createMonitorHTML(m,i));
 
 function toFullDate(ts){
   const d = new Date(ts);
@@ -108,8 +115,14 @@ const socket = new WebSocket(WS_URL);
 const OFFLINE_THRESHOLD = 10000;
 let lastTs=0;
 
-socket.addEventListener("open",()=>{ document.getElementById("connection").style.background="limegreen"; });
-socket.addEventListener("close",()=>{ makeAllOffline(); });
+socket.addEventListener("open",()=>{
+  document.getElementById("connection").style.background="limegreen";
+});
+
+socket.addEventListener("close",()=>{
+  makeAllOffline();
+  document.getElementById("connection").style.background="red";
+});
 
 socket.addEventListener("message",(e)=>{
   try{
@@ -118,32 +131,31 @@ socket.addEventListener("message",(e)=>{
     if(msg.type==="init" || msg.type==="update"){
       lastTs = msg.ts || Date.now();
       document.getElementById("lastUpdate").innerText = toFullDate(lastTs);
-      document.getElementById("connection").style.background="limegreen";
 
       applyDataToUI(msg.data||{});
       clearOfflineFlags();
-
-      if(!initialLoadDone){ initialLoadDone = true; } // İlk veri geldikten sonra artık alarm kontrolü yapılacak
-    } else if(msg.type==="offline"){
+    }
+    else if(msg.type==="offline"){
       makeAllOffline();
     }
-  } catch(err){ console.error(err); }
+  }
+  catch(err){ console.error(err); }
 });
 
 function applyDataToUI(rootData){
   monitors.forEach((m,i)=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
-    const hatKey = "hat1";
-    const hatData=rootData["monitor"+(i+1)]?.[hatKey];
+
+    const hatData=rootData["monitor"+(i+1)]?.["hat1"];
     const container = document.getElementById(m);
 
     if(!hatData){
-      for(let j=1;j<=4;j++){
-        tds[j].querySelector(".val").innerText="-";
-        tds[j].querySelector(".led").style.background="gray";
+      for(let i=1;i<=4;i++){
+        tds[i].querySelector(".val").innerText="-";
+        tds[i].querySelector(".led").style.background="gray";
       }
-      if(initialLoadDone) container.classList.remove("alarm");
+      container.classList.remove("alarm");
       return;
     }
 
@@ -152,12 +164,10 @@ function applyDataToUI(rootData){
     updateCell(tds[3], hatData.voltage?.value, hatData.voltage?.alert);
     updateCell(tds[4], hatData.power?.value, hatData.power?.alert);
 
-    if(initialLoadDone){
-      if(hatData.temperature?.alert || hatData.current?.alert || hatData.voltage?.alert || hatData.power?.alert){
-        container.classList.add("alarm");
-      } else {
-        container.classList.remove("alarm");
-      }
+    if(hatData.temperature?.alert || hatData.current?.alert || hatData.voltage?.alert || hatData.power?.alert){
+      container.classList.add("alarm");
+    } else {
+      container.classList.remove("alarm");
     }
   });
 }
@@ -165,8 +175,10 @@ function applyDataToUI(rootData){
 function updateCell(td, value, alert){
   const valSpan=td.querySelector(".val");
   const led=td.querySelector(".led");
+
   const oldValue = valSpan.innerText;
   const newValue = (value===null || value===-1)?"-":Number(value).toFixed(2);
+
   if(oldValue!==newValue){
     valSpan.innerText=newValue;
     led.style.background = alert ? "red" : "limegreen";
@@ -179,22 +191,28 @@ function makeAllOffline(){
   monitors.forEach((m)=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
-    for(let j=1;j<=4;j++){
-      tds[j].querySelector(".val").innerText="-";
-      tds[j].querySelector(".led").style.background="gray";
+
+    for(let i=1;i<=4;i++){
+      tds[i].querySelector(".val").innerText="-";
+      tds[i].querySelector(".led").style.background="gray";
     }
+
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
-    if(initialLoadDone) document.getElementById(m).classList.remove("alarm");
+    document.getElementById(m).classList.remove("alarm");
   });
+
   document.getElementById("connection").style.background="red";
 }
 
-function clearOfflineFlags(){ monitors.forEach(m=>document.getElementById(m+"_offline").innerText=""); }
+function clearOfflineFlags(){
+  monitors.forEach(m=>document.getElementById(m+"_offline").innerText="");
+}
 
 setInterval(()=>{
-  if(Date.now()-lastTs > OFFLINE_THRESHOLD){ makeAllOffline(); }
+  if(Date.now()-lastTs > OFFLINE_THRESHOLD){
+    makeAllOffline();
+  }
 },2000);
-
 </script>
 </body>
 </html>
