@@ -44,7 +44,6 @@
 
 <script>
 const monitors = ["Monitör1","Monitör2","Monitör3","Monitör4"];
-let firstDataReceived = false;
 
 function updateClock(){
   document.getElementById("clock").innerText = new Date().toLocaleTimeString();
@@ -110,21 +109,6 @@ const socket = new WebSocket(WS_URL);
 const OFFLINE_THRESHOLD = 10000;
 let lastTs=0;
 
-function startupEffect(){
-  monitors.forEach(m=>{
-    const rowEl = document.getElementById(m+"_hat1");
-    const tds = rowEl.getElementsByTagName("td");
-    for(let i=1;i<=4;i++){
-      tds[i].querySelector(".val").innerText="00.00";
-      const led = tds[i].querySelector(".led");
-      led.style.background="limegreen";
-      led.classList.add("pulse");
-      setTimeout(()=>led.classList.remove("pulse"),500);
-    }
-    document.getElementById(m+"_offline").innerText="Sistem Açıldı";
-  });
-}
-
 function resetMonitors(){
   monitors.forEach(m=>{
     const rowEl=document.getElementById(m+"_hat1");
@@ -140,16 +124,17 @@ function resetMonitors(){
 
 socket.addEventListener("open",()=>{
   document.getElementById("connection").style.background="limegreen";
-  if(!firstDataReceived) startupEffect();  // İlk veri gelmeden sadece açılış efekti
+  resetMonitors(); // İlk bağlantıda monitörler temizleniyor, ikon yeşile dönüyor
 });
 
-socket.addEventListener("close",()=>{ makeAllOffline(); });
+socket.addEventListener("close",()=>{
+  makeAllOffline();
+});
 
 socket.addEventListener("message",(e)=>{
   try{
     const msg=JSON.parse(e.data);
     if(msg.type==="init" || msg.type==="update"){
-      firstDataReceived = true;  // İlk veri geldi
       lastTs = msg.ts || Date.now();
       document.getElementById("lastUpdate").innerText = toFullDate(lastTs);
       document.getElementById("connection").style.background="limegreen";
