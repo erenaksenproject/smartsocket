@@ -5,22 +5,56 @@
 <title>Akıllı DC Güç Ünitesi</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-  body { font-family:'Segoe UI',Arial; background:#121212; color:#e0e0e0; margin:0; }
+  body {
+    font-family:'Segoe UI',Arial;
+    background:#121212;
+    color:#e0e0e0;
+    margin:0;
+  }
 
-  header { padding:12px 0; display:flex; justify-content:center; align-items:center; gap:10px;
-           background:#1f1f1f; font-size:26px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.5); }
+  header {
+    padding:12px 0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    background:#1f1f1f;
+    font-size:26px;
+    font-weight:bold;
+    box-shadow:0 2px 6px rgba(0,0,0,0.5);
+  }
 
   #clock { font-size:18px; color:#cfcfcf; }
   #connection { width:14px; height:14px; border-radius:50%; background:red; }
 
-  #monitors { display:flex; flex-wrap:wrap; justify-content:center; padding:16px; gap:16px; }
+  #monitors {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    padding:16px;
+    gap:16px;
+  }
 
-  .monitor { background:#1f1f1f; border-radius:12px; padding:16px; width:280px;
-             box-shadow:0 4px 12px rgba(0,0,0,0.7); border:2px solid transparent; transition:0.3s; }
+  .monitor {
+    background:#1f1f1f;
+    border-radius:12px;
+    padding:16px;
+    width:280px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.7);
+    border:2px solid transparent;
+    transition:0.3s;
+    outline:none;
+  }
+
+  /* Tıklanınca mavi çerçeve */
+  .monitor:focus {
+    border-color:#008cff;
+    box-shadow:0 0 8px #008cff;
+  }
 
   .monitor.alarm { border-color:#ff4d4d; }
 
-  /* ======== UYANMA ANİMASYONU ======== */
+  /* Uyanma animasyonu */
   .wake {
     animation: wakePulse 1.2s infinite;
     border-color:#00aaff !important;
@@ -31,22 +65,60 @@
     100% { box-shadow:0 0 4px #00aaff; }
   }
 
-  .hat-title { font-size:20px; font-weight:600; margin-bottom:10px; text-align:center; }
+  .hat-title {
+    font-size:20px;
+    font-weight:600;
+    margin-bottom:10px;
+    text-align:center;
+  }
 
-  table { width:100%; border-collapse:collapse; }
-  th,td { border:1px solid #333; padding:8px; text-align:center; }
-  th { background:#2a2a2a; }
+  table {
+    width:100%;
+    border-collapse:collapse;
+    text-align:center;
+  }
+
+  th {
+    background:#2a2a2a;
+    border:1px solid #333;
+    padding:8px;
+    text-align:center;
+    font-weight:600;
+  }
+
+  td {
+    border:1px solid #333;
+    padding:8px;
+    text-align:center;
+  }
+
+  /* Değer + LED hizası düzeltildi */
+  .cellwrap {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:6px;
+  }
 
   .val { font-weight:500; }
-  .led { width:14px; height:14px; border-radius:50%; display:inline-block; margin-left:6px; background:gray; }
+  .led { width:14px; height:14px; border-radius:50%; background:gray; }
 
-  .offline-banner { text-align:center; margin-top:10px; font-size:14px; color:#ffcc00; }
+  .offline-banner {
+    text-align:center;
+    margin-top:10px;
+    font-size:14px;
+    color:#ffcc00;
+  }
 
-  footer { text-align:center; margin-top:16px; font-size:12px; color:#888; }
+  footer {
+    text-align:center;
+    margin-top:16px;
+    font-size:12px;
+    color:#888;
+  }
 </style>
 </head>
 <body>
-
 <header>
   Akıllı DC Güç Ünitesi Monitörü
   <div id="clock"></div>
@@ -54,29 +126,24 @@
 </header>
 
 <div id="monitors"></div>
+
 <footer>Son güncelleme: <span id="lastUpdate">-</span></footer>
 
 <script>
-/* ====================================================
-   UYANMA MODU & İLK VERİ ATLAMA
-   ==================================================== */
-let wakeMode = true;            // Uyanma animasyonu aktif
-let firstPacketSkipped = false; // İlk WebSocket verisi atlanacak
+let wakeMode = false;
+let firstPacketSkipped = true;
 
-function updateClock(){ 
-  document.getElementById("clock").innerText=new Date().toLocaleTimeString(); 
-}
+let clockEl=document.getElementById("clock");
+function updateClock(){ clockEl.innerText=new Date().toLocaleTimeString(); }
 setInterval(updateClock,1000);
 
-/* ====================================================
-   MONİTÖRLERİ OLUŞTUR
-   ==================================================== */
 const monitors=["Monitör1","Monitör2","Monitör3","Monitör4"];
 
 function createMonitorHTML(name,index){
   const c=document.createElement("div");
-  c.className="monitor wake";  // ilk açılışta uyanma
+  c.className="monitor";
   c.id=name;
+  c.setAttribute("tabindex","0");
 
   const title=document.createElement("div");
   title.className="hat-title";
@@ -85,20 +152,25 @@ function createMonitorHTML(name,index){
 
   const tbl=document.createElement("table");
   const headerRow=document.createElement("tr");
+
   ["Hat","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{
-    let th=document.createElement("th"); th.innerText=h; headerRow.appendChild(th);
+    let th=document.createElement("th");
+    th.innerText=h;
+    headerRow.appendChild(th);
   });
+
   tbl.appendChild(headerRow);
 
   const row=document.createElement("tr");
   row.id=name+"_hat1";
 
-  let tdHat=document.createElement("td"); tdHat.innerText="Hat "+(index+1);
+  let tdHat=document.createElement("td");
+  tdHat.innerText="Hat "+(index+1);
   row.appendChild(tdHat);
 
   for(let i=0;i<4;i++){
     let td=document.createElement("td");
-    td.innerHTML=`<span class="val">00.00</span> <span class="led"></span>`;
+    td.innerHTML=`<div class="cellwrap"><span class="val">00.00</span><span class="led"></span></div>`;
     row.appendChild(td);
   }
 
@@ -108,7 +180,7 @@ function createMonitorHTML(name,index){
   const offline=document.createElement("div");
   offline.className="offline-banner";
   offline.id=name+"_offline";
-  offline.innerText="Sistem uyanıyor...";
+  offline.innerText="Bağlantı yok";
   c.appendChild(offline);
 
   document.getElementById("monitors").appendChild(c);
@@ -116,25 +188,28 @@ function createMonitorHTML(name,index){
 
 monitors.forEach(createMonitorHTML);
 
-/* ====================================================
-   WEBSOCKET BAĞLANTI
-   ==================================================== */
-const protocol = (location.protocol==="https:")?"wss:":"ws:";
-const socket = new WebSocket(protocol+"//"+location.host);
+const protocol=(location.protocol==="https:")?"wss:":"ws:";
+const socket=new WebSocket(protocol+"//"+location.host);
 
 let lastTs=0;
 const OFFLINE_THRESHOLD=10000;
 
 socket.addEventListener("open",()=>{
   document.getElementById("connection").style.background="orange";
+  wakeMode = true;
+  firstPacketSkipped = false;
+
+  monitors.forEach(m=>{
+    document.getElementById(m).classList.add("wake");
+    document.getElementById(m+"_offline").innerText="Sistem uyanıyor...";
+  });
 });
 
 socket.addEventListener("message",(e)=>{
-  const msg = JSON.parse(e.data);
+  const msg=JSON.parse(e.data);
 
   if(!firstPacketSkipped){
-    console.log("HTML → İlk gelen veri atlandı.");
-    firstPacketSkipped = true;
+    firstPacketSkipped=true;
     return;
   }
 
@@ -146,19 +221,19 @@ socket.addEventListener("message",(e)=>{
     lastTs = msg.ts || Date.now();
     document.getElementById("lastUpdate").innerText = new Date(lastTs).toLocaleTimeString();
     document.getElementById("connection").style.background="limegreen";
+
+    monitors.forEach(m=>{
+      document.getElementById(m+"_offline").innerText="";
+    });
+
     applyData(msg.data);
   }
 });
 
 socket.addEventListener("close",()=>makeAllOffline());
 
-/* ====================================================
-   UYANMA MODUNU KAPAT
-   ==================================================== */
 function exitWakeMode(){
   wakeMode=false;
-  document.getElementById("connection").style.background="limegreen";
-
   monitors.forEach(m=>{
     let el=document.getElementById(m);
     el.classList.remove("wake");
@@ -166,9 +241,6 @@ function exitWakeMode(){
   });
 }
 
-/* ====================================================
-   VERİLERİ YAZDIR
-   ==================================================== */
 function applyData(data){
   monitors.forEach((m,i)=>{
     const d=data["monitor"+(i+1)]?.hat1;
@@ -178,14 +250,15 @@ function applyData(data){
 
     if(!d) return;
 
-    updateCell(tds[1], d.temperature?.value, d.temperature?.alert);
-    updateCell(tds[2], d.current?.value, d.current?.alert);
-    updateCell(tds[3], d.voltage?.value, d.voltage?.alert);
-    updateCell(tds[4], d.power?.value, d.power?.alert);
+    updateCell(tds[1], d.temperature.value, d.temperature.alert);
+    updateCell(tds[2], d.current.value, d.current.alert);
+    updateCell(tds[3], d.voltage.value, d.voltage.alert);
+    updateCell(tds[4], d.power.value, d.power.alert);
 
-    if(d.temperature?.alert || d.current?.alert || d.voltage?.alert || d.power?.alert)
+    if(d.temperature.alert || d.current.alert || d.voltage.alert || d.power.alert)
       cont.classList.add("alarm");
-    else cont.classList.remove("alarm");
+    else
+      cont.classList.remove("alarm");
   });
 }
 
@@ -198,9 +271,6 @@ function updateCell(td,value,alert){
   led.style.background = alert ? "red" : "limegreen";
 }
 
-/* ====================================================
-   OFFLINE DURUMU
-   ==================================================== */
 function makeAllOffline(){
   monitors.forEach(m=>{
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
@@ -215,5 +285,6 @@ setInterval(()=>{
   }
 },2000);
 </script>
+
 </body>
 </html>
