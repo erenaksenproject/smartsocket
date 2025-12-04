@@ -50,7 +50,4 @@ setInterval(()=>{
     const msg=JSON.stringify({ type:"offline", data:null, ts:lastTimestamp });
     wss.clients.forEach(c=>{ if(c.readyState===1) c.send(msg); });
   }
-},3000);
 
-const PORT=process.env.PORT||10000;
-server.listen(PORT,()=>console.log(`Server running on port ${PORT}`));
