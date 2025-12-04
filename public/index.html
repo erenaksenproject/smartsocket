@@ -9,6 +9,7 @@
   header { padding: 12px 0; display:flex; justify-content:center; align-items:center; gap:10px; background:#1f1f1f; font-size:26px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.5);}
   #clock { font-size:18px; color:#cfcfcf; }
   #connection { width:14px; height:14px; border-radius:50%; background:red; display:inline-block; vertical-align:middle; }
+  #toggleRelay { margin-left:20px; padding:6px 12px; cursor:pointer; }
 
   #monitors { display:flex; flex-wrap:wrap; justify-content:center; padding:16px; gap:16px; }
   .monitor { background:#1f1f1f; border-radius:12px; padding:16px; min-width:280px; width:280px; box-shadow:0 4px 12px rgba(0,0,0,0.7); transition:0.3s; border:2px solid transparent; cursor:pointer; }
@@ -34,78 +35,57 @@
 <body>
 <header>
   Akıllı DC Güç Ünitesi Monitörü
+  <button id="toggleRelay">Röle Aç/Kapa</button>
   <div id="clock"></div>
   <div id="connection"></div>
 </header>
 
 <div id="monitors"></div>
-
 <footer>Son güncelleme: <span id="lastUpdate">-</span></footer>
 
 <script>
 const monitors = ["Monitör1","Monitör2","Monitör3","Monitör4"];
 
-function updateClock(){
-  document.getElementById("clock").innerText = new Date().toLocaleTimeString();
-}
+function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
 setInterval(updateClock,1000);
 
 function createMonitorHTML(monitorId, index){
   const container = document.createElement("div");
-  container.className="monitor";
-  container.id=monitorId;
+  container.className="monitor"; container.id=monitorId;
 
   const title = document.createElement("div");
-  title.className="hat-title";
-  title.innerText = monitorId;
-  container.appendChild(title);
+  title.className="hat-title"; title.innerText = monitorId; container.appendChild(title);
 
   const table = document.createElement("table");
   const header = document.createElement("tr");
   ["Hat","Sıcaklık (°C)","Akım (A)","Gerilim (V)","Güç (W)"].forEach(h=>{
-    const th=document.createElement("th");
-    th.innerText=h;
-    header.appendChild(th);
+    const th=document.createElement("th"); th.innerText=h; header.appendChild(th);
   });
   table.appendChild(header);
 
-  const tr = document.createElement("tr");
-  tr.id = monitorId + "_hat1";
-
-  const tdHat = document.createElement("td");
-  tdHat.innerText = "Hat " + (index+1);
-  tr.appendChild(tdHat);
-
+  const tr = document.createElement("tr"); tr.id = monitorId + "_hat1";
+  const tdHat = document.createElement("td"); tdHat.innerText = "Hat " + (index+1); tr.appendChild(tdHat);
   for(let i=0;i<4;i++){
-    const td=document.createElement("td");
-    td.innerHTML='<span class="val">-</span> <span class="led"></span>';
-    tr.appendChild(td);
+    const td=document.createElement("td"); td.innerHTML='<span class="val">-</span> <span class="led"></span>'; tr.appendChild(td);
   }
   table.appendChild(tr);
   container.appendChild(table);
 
   const offlineDiv=document.createElement("div");
-  offlineDiv.className="offline-banner";
-  offlineDiv.id=monitorId+"_offline";
-  offlineDiv.innerText="Bağlantı yok";
+  offlineDiv.className="offline-banner"; offlineDiv.id=monitorId+"_offline"; offlineDiv.innerText="Bağlantı yok";
   container.appendChild(offlineDiv);
 
   container.addEventListener("click",()=>{ container.classList.add("active"); setTimeout(()=>container.classList.remove("active"),500); });
-
   document.getElementById("monitors").appendChild(container);
 }
 
 monitors.forEach((m,i)=>createMonitorHTML(m,i));
 
-function toFullDate(ts){
-  const d = new Date(ts);
-  return d.toLocaleDateString()+" "+d.toLocaleTimeString();
-}
+function toFullDate(ts){ const d = new Date(ts); return d.toLocaleDateString()+" "+d.toLocaleTimeString(); }
 
 const protocol = (location.protocol==="https:")?"wss:":"ws:";
 const WS_URL = protocol+"//"+location.host;
 const socket = new WebSocket(WS_URL);
-
 const OFFLINE_THRESHOLD = 10000;
 let lastTs=0;
 
@@ -113,24 +93,14 @@ function resetMonitors(){
   monitors.forEach(m=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
-    for(let i=1;i<=4;i++){
-      tds[i].querySelector(".val").innerText="-";
-      tds[i].querySelector(".led").style.background="gray";
-    }
+    for(let i=1;i<=4;i++){ tds[i].querySelector(".val").innerText="-"; tds[i].querySelector(".led").style.background="gray"; }
     document.getElementById(m).classList.remove("alarm");
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
   });
 }
 
-socket.addEventListener("open",()=>{
-  document.getElementById("connection").style.background="limegreen";
-  resetMonitors(); // İlk bağlantıda monitörler temizleniyor, ikon yeşile dönüyor
-});
-
-socket.addEventListener("close",()=>{
-  makeAllOffline();
-});
-
+socket.addEventListener("open",()=>{ document.getElementById("connection").style.background="limegreen"; resetMonitors(); });
+socket.addEventListener("close",()=>{ makeAllOffline(); });
 socket.addEventListener("message",(e)=>{
   try{
     const msg=JSON.parse(e.data);
@@ -140,10 +110,7 @@ socket.addEventListener("message",(e)=>{
       document.getElementById("connection").style.background="limegreen";
       applyDataToUI(msg.data||{});
       clearOfflineFlags();
-    }
-    else if(msg.type==="offline"){
-      makeAllOffline();
-    }
+    } else if(msg.type==="offline"){ makeAllOffline(); }
   } catch(err){ console.error(err); }
 });
 
@@ -153,15 +120,7 @@ function applyDataToUI(rootData){
     const tds=rowEl.getElementsByTagName("td");
     const hatData=rootData["monitor"+(i+1)]?.["hat1"];
     const container = document.getElementById(m);
-
-    if(!hatData){
-      for(let j=1;j<=4;j++){
-        tds[j].querySelector(".val").innerText="-";
-        tds[j].querySelector(".led").style.background="gray";
-      }
-      container.classList.remove("alarm");
-      return;
-    }
+    if(!hatData){ for(let j=1;j<=4;j++){ tds[j].querySelector(".val").innerText="-"; tds[j].querySelector(".led").style.background="gray"; } container.classList.remove("alarm"); return; }
 
     updateCell(tds[1], hatData.temperature?.value, hatData.temperature?.alert);
     updateCell(tds[2], hatData.current?.value, hatData.current?.alert);
@@ -170,51 +129,43 @@ function applyDataToUI(rootData){
 
     if(hatData.temperature?.alert || hatData.current?.alert || hatData.voltage?.alert || hatData.power?.alert){
       container.classList.add("alarm");
-    } else {
-      container.classList.remove("alarm");
-    }
+    } else container.classList.remove("alarm");
   });
 }
 
 function updateCell(td, value, alert){
   const valSpan=td.querySelector(".val");
   const led=td.querySelector(".led");
-
   const oldValue = valSpan.innerText;
   const newValue = (value===null || value===-1)?"-":Number(value).toFixed(2);
-
-  if(oldValue!==newValue){
-    valSpan.innerText=newValue;
-    led.style.background = alert ? "red" : "limegreen";
-    led.classList.add("pulse");
-    setTimeout(()=>led.classList.remove("pulse"),500);
-  }
+  if(oldValue!==newValue){ valSpan.innerText=newValue; led.style.background = alert ? "red" : "limegreen"; led.classList.add("pulse"); setTimeout(()=>led.classList.remove("pulse"),500); }
 }
 
 function makeAllOffline(){
   monitors.forEach((m)=>{
     const rowEl=document.getElementById(m+"_hat1");
     const tds=rowEl.getElementsByTagName("td");
-    for(let i=1;i<=4;i++){
-      tds[i].querySelector(".val").innerText="-";
-      tds[i].querySelector(".led").style.background="gray";
-    }
+    for(let i=1;i<=4;i++){ tds[i].querySelector(".val").innerText="-"; tds[i].querySelector(".led").style.background="gray"; }
     document.getElementById(m+"_offline").innerText="Bağlantı yok";
     document.getElementById(m).classList.remove("alarm");
   });
   document.getElementById("connection").style.background="red";
 }
 
-function clearOfflineFlags(){
-  monitors.forEach(m=>document.getElementById(m+"_offline").innerText="");
-}
+function clearOfflineFlags(){ monitors.forEach(m=>document.getElementById(m+"_offline").innerText=""); }
 
 setInterval(()=>{
-  if(Date.now()-lastTs > OFFLINE_THRESHOLD){
-    makeAllOffline();
-  }
+  if(Date.now()-lastTs > OFFLINE_THRESHOLD){ makeAllOffline(); }
 },2000);
 
+// 🔹 Röle toggle butonu
+document.getElementById("toggleRelay").addEventListener("click", async () => {
+  try{
+    const res = await fetch("/api/toggle",{ method:"POST" });
+    const data = await res.json();
+    alert("Röle durumu: "+data.status);
+  } catch(err){ console.error(err); alert("Röle komutu gönderilemedi!"); }
+});
 </script>
 </body>
 </html>
