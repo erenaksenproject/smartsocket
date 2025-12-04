@@ -45,9 +45,10 @@
 
 <script>
 const monitors = ["Monitör1","Monitör2","Monitör3","Monitör4"];
-const ESP_IP = "http://192.168.1.50"; // ESP sabit IP
 
-function updateClock(){ document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }
+function updateClock(){
+  document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+}
 setInterval(updateClock,1000);
 
 function createMonitorHTML(monitorId, index){
@@ -158,11 +159,11 @@ function clearOfflineFlags(){ monitors.forEach(m=>document.getElementById(m+"_of
 setInterval(()=>{ if(Date.now()-lastTs > OFFLINE_THRESHOLD){ makeAllOffline(); } },2000);
 
 // 🔹 Röle toggle butonu
-document.getElementById("toggleRelay").addEventListener("click", async () => {
+document.getElementById("toggleRelay").addEventListener("click", async ()=>{
   try{
-    const res = await fetch(`${ESP_IP}/toggle`);
-    const status = await res.text();
-    alert("Röle durumu: "+status);
+    const res = await fetch("/api/toggle",{ method:"POST" });
+    const data = await res.json();
+    alert("Röle durumu: "+data.status);
   } catch(err){ console.error(err); alert("Röle komutu gönderilemedi!"); }
 });
 </script>
