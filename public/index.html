@@ -150,13 +150,11 @@ function processData(obj){
     vEl.innerText=d.voltage?.value?.toFixed(2)||"-"; aEl.innerText=d.current?.value?.toFixed(2)||"-"; wEl.innerText=d.power?.value?.toFixed(2)||"-"; tEl.innerText=d.temperature?.value?.toFixed(1)||"-";
     flash(vEl,d.voltage.value>oldV?"up":"down"); flash(aEl,d.current.value>oldA?"up":"down"); flash(wEl,d.power.value>oldW?"up":"down");
 
-    // Enerji yok kontrolü (güç veya akım çok küçük veya sıfırsa)
-    if(Math.abs(d.power.value) < 0.0001 || Math.abs(d.current.value) < 0.0001){
-      statEl.innerText="Enerji yok"; 
-      dotEl.style.background="#ff9800";
+    // Enerji yok kontrolü
+    if(d.power.value===0 || d.current.value===0){
+      statEl.innerText="Enerji yok"; dotEl.style.background="#ff9800";
     } else {
-      statEl.innerText="Bağlantı: Aktif"; 
-      dotEl.style.background="#0f0";
+      statEl.innerText="Bağlantı: Aktif"; dotEl.style.background="#0f0";
       anyActive=true;
     }
 
