@@ -6,44 +6,33 @@
 
 <title>Akıllı DC Güç Ünitesi</title>
 
-<link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
+<link rel="icon" type="image/png" 
+href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  /* =========================================================
-     GLOBAL THEME VARIABLES
-     ========================================================= */
   body{
     font-family:'Segoe UI',Arial,sans-serif;
     margin:0;padding:0;
-    --bg:#eef2f6;
-    --text:#111;
-    --card:rgba(255,255,255,0.65);
-    --border:rgba(0,0,0,0.15);
+    --bg:#eef2f6;--text:#111;
+    --card:rgba(255,255,255,0.6);
+    --border:rgba(255,255,255,0.5);
   }
-
   body.dark{
-    --bg:#0b0c0e;
-    --text:#eee;
-    --card:rgba(25,25,25,0.55);
-    --border:rgba(255,255,255,0.12);
+    --bg:#0b0c0e;--text:#eee;
+    --card:rgba(20,20,20,0.48);
+    --border:rgba(255,255,255,0.06);
   }
 
-  /* Arkaplanın her zaman temaya uyması */
-  html, body, #dashboard, #loginScreen {
-    background:var(--bg) !important;
-    color:var(--text);
-  }
-
-  /* LOGIN */
+  /* ---------------- LOGIN ---------------- */
   #loginScreen{
     position:fixed; inset:0;
+    background:var(--bg);
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
     gap:18px;
-    backdrop-filter:blur(4px);
   }
-
   #loginBox{
     background:var(--card);
     border:1px solid var(--border);
@@ -54,9 +43,7 @@
     transition:0.25s;
   }
 
-  #loginBox.shake{
-    animation:shakeAnim 0.35s ease;
-  }
+  #loginBox.shake{ animation:shakeAnim 0.35s ease; }
   @keyframes shakeAnim{
     0%{transform:translateX(0);}
     25%{transform:translateX(-6px);}
@@ -67,65 +54,47 @@
 
   #loginBox.errorBorder{
     border:1px solid #c62828;
-    box-shadow:0 0 8px rgba(198,40,40,0.7);
+    box-shadow:0 0 8px rgba(198,40,40,0.6);
   }
 
   #loginBox.success{
     border:1px solid #00c853 !important;
-    box-shadow:0 0 16px rgba(0,200,83,0.9) !important;
+    box-shadow:0 0 14px rgba(0,200,83,0.8) !important;
     animation:successPop 0.45s ease forwards;
   }
   @keyframes successPop{
-    0%{transform:scale(1);opacity:1;}
-    50%{transform:scale(1.07);opacity:1;}
-    100%{transform:scale(0.7);opacity:0;}
+    0%{ transform:scale(1); opacity:1; }
+    50%{ transform:scale(1.07); opacity:1; }
+    100%{ transform:scale(0.7); opacity:0; }
   }
 
   #loginBox input{
     padding:10px;border-radius:8px;
-    border:1px solid var(--border);
-    width:100%;
-    background:var(--card);
-    color:var(--text);
+    border:1px solid var(--border);width:100%;
   }
 
   #passwordWrap{ position:relative;width:100%; }
-
   #togglePass{
-    position:absolute;
-    right:10px; top:50%;
-    transform:translateY(-50%);
-    cursor:pointer; font-size:18px;
+    position:absolute; right:10px; top:50%;
+    transform:translateY(-50%);cursor:pointer;font-size:18px;
   }
 
   #capsWarning{
-    color:#c62828; font-size:12px;
-    display:none; margin-top:-6px;
+    color:#c62828;font-size:12px;display:none;margin-top:-6px;
   }
 
   #loginBox button{
-    padding:10px;border-radius:8px;border:none;
-    cursor:pointer;background:#1E88E5;color:white;
-    font-size:15px;font-weight:600;
+    padding:10px;border-radius:8px;border:none;cursor:pointer;
+    background:#1E88E5;color:white;font-size:15px;font-weight:600;
   }
-
-  #blockMsg{color:#c62828;font-size:13px;}
 
   .logoutBtn{
     cursor:pointer;font-size:15px;
     padding:6px 10px;border-radius:8px;
     border:1px solid var(--border);background:var(--card);
-    color:var(--text);
   }
 
-  /* =========================================================
-       DASHBOARD
-     ========================================================= */
-
-  .header, .summary, .grid {
-    background:var(--bg);
-    color:var(--text);
-  }
+  /* ---------------- DASHBOARD ---------------- */
 
   .header{
     display:flex;justify-content:space-between;align-items:center;
@@ -133,22 +102,14 @@
   }
 
   .title{display:flex;flex-direction:column;font-weight:700;}
-  .subtitle{font-size:12px;opacity:0.75;margin-top:4px;color:var(--text);}
+  .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
+
   .right-controls{display:flex;align-items:center;gap:12px;}
 
   .clock{
     font-size:16px;font-weight:600;padding:8px 12px;
     border-radius:10px;background:var(--card);
     border:1px solid var(--border);
-    color:var(--text);
-  }
-
-  .themeToggle{
-    padding:6px 10px;border-radius:6px;
-    border:1px solid var(--border);
-    background:var(--card);
-    cursor:pointer;font-size:14px;
-    color:var(--text);
   }
 
   .summary{
@@ -158,33 +119,61 @@
   }
 
   .sum-card{
-    background:var(--card);color:var(--text);
-    border:1px solid var(--border);
-    padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;
+    background:var(--card);border:1px solid var(--border);
+    padding:12px 16px;border-radius:12px;
+    min-width:120px;text-align:center;
   }
 
   .grid{
-    max-width:1200px;margin:14px auto;
-    display:grid;grid-template-columns:repeat(2,1fr);
-    gap:16px;padding:0 14px;
+    max-width:1200px;margin:14px auto;display:grid;
+    grid-template-columns:repeat(2,1fr);gap:16px;padding:0 14px;
   }
-  @media(max-width:800px){.grid{grid-template-columns:1fr;}}
+  @media(max-width:800px){ .grid{grid-template-columns:1fr;} }
 
   .card{
-    background:var(--card);
-    border:1px solid var(--border);
+    background:var(--card);border:1px solid var(--border);
     border-radius:14px;padding:12px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.18);
-    transform-origin:top;transform:scale(0.9);
-    color:var(--text);
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    transform:scale(0.9);transform-origin:top;
   }
-  .card:hover{transform:scale(0.94);}
+  .card:hover{ transform:scale(0.94); }
 
-  .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
+  .card-title{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:8px;margin-bottom:8px;
+    font-weight:700;font-size:15px;
+  }
 
-  .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text);}
-  .val-label{font-size:12px;opacity:0.75;color:var(--text);}
-  .tiny{font-size:12px;opacity:0.78;color:var(--text);}
+  .status-dot{
+    width:12px;height:12px;border-radius:50%;display:inline-block;
+  }
+
+  /* ---------------------------------------------
+         DÜZELTİLEN BÖLÜM — YAN YANA GÖRÜNÜM
+  --------------------------------------------- */
+  .values-row{
+    display:flex;
+    flex-direction:row !important;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    width:100%;
+  }
+
+  .val-box{
+    flex:1 1 33%;
+    min-width:0;
+    text-align:center;
+  }
+
+  .val-num{
+    font-weight:800;font-size:16px;
+    display:flex;align-items:center;
+    justify-content:center;gap:8px;
+    white-space:nowrap;
+  }
+
+  .tiny{font-size:12px;opacity:0.7;}
 
 </style>
 </head>
@@ -234,13 +223,15 @@
   </div>
 
   <div class="summary">
-    <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.0 V</div></div>
-    <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.00 A</div></div>
-    <div class="sum-card"><div class="sum-label">Toplam Güç</div><div class="sum-val" id="sumW">0.0 W</div></div>
+    <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div id="sumV">0.0 V</div></div>
+    <div class="sum-card"><div class="sum-label">Toplam Akım</div><div id="sumA">0.00 A</div></div>
+    <div class="sum-card"><div class="sum-label">Toplam Güç</div><div id="sumW">0.0 W</div></div>
   </div>
 
   <div class="grid" id="grid"></div>
 </div>
+
+
 
 
 <script>
@@ -248,19 +239,22 @@
       LOGIN – ENTER + CAPSLOCK + SHOW/HIDE + SHAKE + SUCCESS
 ============================================================ */
 
-const loginBox=document.getElementById("loginBox");
+const loginBox = document.getElementById("loginBox");
 
-function saveToken(t){ localStorage.setItem("sessionToken",t); }
+function saveToken(t){ localStorage.setItem("sessionToken", t); }
 function loadToken(){ return localStorage.getItem("sessionToken"); }
 function clearToken(){ localStorage.removeItem("sessionToken"); }
 
-loginBox.addEventListener("keydown",e=>{ if(e.key==="Enter") handleLogin(); });
+/* Enter ile login */
+loginBox.addEventListener("keydown",(e)=>{ if(e.key==="Enter") handleLogin(); });
 
+/* Caps Lock */
 document.getElementById("password").addEventListener("keyup",(e)=>{
   document.getElementById("capsWarning").style.display =
     e.getModifierState("CapsLock") ? "block" : "none";
 });
 
+/* Şifre göster/gizle */
 document.getElementById("togglePass").onclick=()=>{
   const p=document.getElementById("password");
   p.type = p.type==="password" ? "text" : "password";
@@ -275,33 +269,48 @@ async function handleLogin(){
   const res=await fetch("/api/login",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ username,password })
+    body:JSON.stringify({ username, password })
   });
   const data=await res.json();
 
   if(data.ok){
     loginBox.classList.add("success");
-    setTimeout(()=>{ saveToken(data.token); showDashboard(); },400);
+    setTimeout(()=>{
+      saveToken(data.token);
+      showDashboard();
+    },400);
     return;
   }
 
   loginBox.classList.add("errorBorder","shake");
-  if(data.error==="wrong") document.getElementById("loginError").innerText="Hatalı kullanıcı adı veya şifre!";
-  else if(data.error==="blocked") document.getElementById("blockMsg").innerText=`${data.remain} saniye sonra tekrar deneyin.`;
-  else if(data.error==="blocked30") document.getElementById("blockMsg").innerText="3 hatalı giriş! 30 saniye bloke edildi.";
+
+  if(data.error==="wrong"){
+    document.getElementById("loginError").innerText="Hatalı kullanıcı adı veya şifre!";
+  }
+  else if(data.error==="blocked"){
+    document.getElementById("blockMsg").innerText=`${data.remain} saniye sonra tekrar deneyin.`;
+  }
+  else if(data.error==="blocked30"){
+    document.getElementById("blockMsg").innerText="3 yanlış giriş, 30 saniye blok!";
+  }
 }
 
 async function checkToken(){
   const token=loadToken();
   if(!token) return false;
-  const res=await fetch("/api/check-token",{ headers:{authorization:token}});
+
+  const res=await fetch("/api/check-token",{
+    headers:{ "authorization": token }
+  });
   const data=await res.json();
   return data.ok===true;
 }
 
 async function logout(){
   const token=loadToken();
-  if(token) await fetch("/api/logout",{ method:"POST", headers:{authorization:token}});
+  if(token){
+    await fetch("/api/logout",{ method:"POST", headers:{ "authorization": token } });
+  }
   clearToken();
   document.getElementById("dashboard").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
@@ -315,28 +324,27 @@ function showDashboard(){
 
 window.addEventListener("load",async()=>{ if(await checkToken()) showDashboard(); });
 
-
 /* ============================================================
-                DASHBOARD (KARTLAR, GRAFİKLER, WS)
+                   DASHBOARD KODU (AYNEN KORUNDU)
 ============================================================ */
 
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 const OFFLINE_THRESHOLD=10000;
 
 let grid=document.getElementById("grid");
-let charts=[],lastTs=0;
+let charts=[],lastReceived=[];
 
 /* Saat */
-setInterval(()=>{ document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString(); },1000);
+setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
 
 /* Tema */
 document.getElementById("themeToggle").onclick=()=>{
   document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText=
+  document.getElementById("themeToggle").innerText =
     document.body.classList.contains("dark") ? "☀️" : "🌙";
 };
 
-/* Kartlar */
+/* Kart Oluştur */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
   const html=`<div class="card" id="${id}">
@@ -344,45 +352,50 @@ for(let i=0;i<MON_NAMES.length;i++){
       <strong>${MON_NAMES[i]}</strong>
       <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
     </div>
+
     <div class="values-row">
       <div class="val-box"><div class="val-num"><span>🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
       <div class="val-box"><div class="val-num"><span>🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
       <div class="val-box"><div class="val-num"><span>⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
     </div>
+
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
       <div class="tiny" id="stat${i}">Durum: —</div>
     </div>
+
     <canvas id="chart${i}" height="110"></canvas>
   </div>`;
+
   const div=document.createElement("div");
   div.innerHTML=html;
   grid.appendChild(div.firstElementChild);
+  lastReceived[i]=0;
 }
 
 /* Grafikler */
 for(let i=0;i<MON_NAMES.length;i++){
   charts[i]=new Chart(document.getElementById("chart"+i).getContext("2d"),{
     type:"line",
-    data:{ labels:[], datasets:[
-      {label:"Volt (V)",data:[],borderColor:"#1E90FF",backgroundColor:"rgba(30,144,255,0.06)",tension:0.25,pointRadius:0},
-      {label:"Akım (A)",data:[],borderColor:"#FF3B30",backgroundColor:"rgba(255,59,48,0.06)",tension:0.25,pointRadius:0},
-      {label:"Güç (W)",data:[],borderColor:"#00C853",backgroundColor:"rgba(0,200,83,0.06)",tension:0.25,pointRadius:0}
-    ]},
+    data:{
+      labels:[],
+      datasets:[
+        {label:"Volt (V)",data:[],borderColor:"#1E90FF",backgroundColor:"rgba(30,144,255,0.06)",tension:0.25,pointRadius:0},
+        {label:"Akım (A)",data:[],borderColor:"#FF3B30",backgroundColor:"rgba(255,59,48,0.06)",tension:0.25,pointRadius:0},
+        {label:"Güç (W)",data:[],borderColor:"#00C853",backgroundColor:"rgba(0,200,83,0.06)",tension:0.25,pointRadius:0}
+      ]
+    },
     options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}
   });
 }
 
-/* Flash */
-function flash(el){
-  el.style.transition="color 0.2s";
-}
+const protocol = (location.protocol==="https:") ? "wss:" : "ws:";
+const WS_URL = protocol+"//"+location.host;
+const socket = new WebSocket(WS_URL);
 
-/* WebSocket */
-const protocol=(location.protocol==="https:")?"wss:":"ws:";
-const WS_URL=protocol+"//"+location.host;
-const socket=new WebSocket(WS_URL);
+let lastTs=0;
 
+/* Veri alma */
 socket.addEventListener("message",(e)=>{
   const msg=JSON.parse(e.data);
 
@@ -390,7 +403,8 @@ socket.addEventListener("message",(e)=>{
     lastTs=msg.ts;
     document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
     processData(msg.data||{});
-  } else if(msg.type==="offline"){
+  }
+  else if(msg.type==="offline"){
     makeAllOffline();
   }
 });
@@ -401,13 +415,14 @@ function fmtTs(ts){
   return d.toLocaleDateString()+" "+d.toLocaleTimeString();
 }
 
-/* Dashboard Güncelleme */
+/* Dashboard Güncelle */
 function processData(obj){
   let totalV=0,totalA=0,totalW=0;
   let anyActive=false;
 
   for(let i=0;i<MON_NAMES.length;i++){
     const d=obj["monitor"+(i+1)]?.hat1;
+
     const vEl=document.getElementById("v"+i);
     const aEl=document.getElementById("a"+i);
     const wEl=document.getElementById("w"+i);
@@ -424,12 +439,11 @@ function processData(obj){
     }
 
     const v=d.voltage.value, a=d.current.value, w=d.power.value;
+
     vEl.innerText=v.toFixed(2);
     aEl.innerText=a.toFixed(3);
     wEl.innerText=w.toFixed(2);
     tEl.innerText=d.temperature.value.toFixed(1);
-
-    flash(vEl); flash(aEl); flash(wEl);
 
     if(a<0.005 || w<0.05){
       statEl.innerText="Enerji yok ⚠️";
@@ -444,6 +458,7 @@ function processData(obj){
       ch.data.labels.shift();
       ch.data.datasets.forEach(ds=>ds.data.shift());
     }
+
     ch.data.labels.push("");
     ch.data.datasets[0].data.push(v);
     ch.data.datasets[1].data.push(a);
@@ -466,7 +481,7 @@ function processData(obj){
 
 /* Offline */
 function makeAllOffline(){
-  MON_NAMES.forEach((m,i)=>{
+  MON_NAMES.forEach((_,i)=>{
     document.getElementById("v"+i).innerText="-";
     document.getElementById("a"+i).innerText="-";
     document.getElementById("w"+i).innerText="-";
@@ -474,6 +489,7 @@ function makeAllOffline(){
     document.getElementById("stat"+i).innerText="Sistem ile iletişim yok";
     document.getElementById("dot"+i).style.background="red";
   });
+
   document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
 }
 
