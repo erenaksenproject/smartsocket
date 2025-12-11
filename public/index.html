@@ -46,7 +46,7 @@
   </div>
   <div class="right-controls">
     <div class="clock" id="realtimeClock">--:--:--</div>
-    <button class="themeToggle" id="themeToggle">🌙 Tema</button>
+    <button class="themeToggle" id="themeToggle">🌙</button>
     <div style="display:flex;flex-direction:column;align-items:center;">
       <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
     </div>
@@ -73,7 +73,7 @@ setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().t
 /* Theme toggle */
 document.getElementById("themeToggle").onclick=()=>{
   document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText=document.body.classList.contains("dark")?"☀️ Tema":"🌙 Tema";
+  document.getElementById("themeToggle").innerText=document.body.classList.contains("dark")?"☀️":"🌙";
 };
 
 /* Build monitors */
@@ -85,9 +85,9 @@ for(let i=0;i<MON_NAMES.length;i++){
       <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
     </div>
     <div class="values-row">
-      <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç</div></div>
+      <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
+      <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
+      <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
@@ -134,42 +134,72 @@ socket.addEventListener("message",(e)=>{
 function processData(obj){
   let totalV=0,totalA=0,totalW=0;
   let anyActive=false;
+
   for(let i=0;i<MON_NAMES.length;i++){
     const d=obj["monitor"+(i+1)]?.hat1 || null;
-    const vEl=document.getElementById("v"+i), aEl=document.getElementById("a"+i), wEl=document.getElementById("w"+i), tEl=document.getElementById("t"+i);
-    const statEl=document.getElementById("stat"+i), dotEl=document.getElementById("dot"+i);
+    const vEl=document.getElementById("v"+i),
+          aEl=document.getElementById("a"+i),
+          wEl=document.getElementById("w"+i),
+          tEl=document.getElementById("t"+i);
+    const statEl=document.getElementById("stat"+i),
+          dotEl=document.getElementById("dot"+i);
     const ch=charts[i];
 
     if(!d){
       vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-";
-      statEl.innerText="Bağlantı yok — kontrol edilmeli"; dotEl.style.background="#f33";
+      statEl.innerText="Bağlantı yok — kontrol edilmeli"; 
+      dotEl.style.background="#f33";
       continue;
     }
 
-    const oldV=parseFloat(vEl.innerText)||0, oldA=parseFloat(aEl.innerText)||0, oldW=parseFloat(wEl.innerText)||0;
-    vEl.innerText=d.voltage?.value?.toFixed(2)||"-"; aEl.innerText=d.current?.value?.toFixed(2)||"-"; wEl.innerText=d.power?.value?.toFixed(2)||"-"; tEl.innerText=d.temperature?.value?.toFixed(1)||"-";
-    flash(vEl,d.voltage.value>oldV?"up":"down"); flash(aEl,d.current.value>oldA?"up":"down"); flash(wEl,d.power.value>oldW?"up":"down");
+    const oldV=parseFloat(vEl.innerText)||0;
+    const oldA=parseFloat(aEl.innerText)||0;
+    const oldW=parseFloat(wEl.innerText)||0;
 
-    // Enerji yok kontrolü
-    if(d.power.value===0 || d.current.value===0){
-      statEl.innerText="Enerji yok"; dotEl.style.background="#ff9800";
+    const v=d.voltage?.value||0;
+    const a=d.current?.value||0;
+    const w=d.power?.value||0;
+
+    vEl.innerText=v.toFixed(2);
+    aEl.innerText=a.toFixed(3);
+    wEl.innerText=w.toFixed(2);
+    tEl.innerText=d.temperature?.value?.toFixed(1)||"-";
+
+    flash(vEl, v>oldV?"up":"down");
+    flash(aEl, a>oldA?"up":"down");
+    flash(wEl, w>oldW?"up":"down");
+
+    /* --- Enerji Yok Eşik Kontrolü (Senin istediğin) --- */
+    if(a < 0.005 || w < 0.05){
+      statEl.innerText="Enerji yok⚠️";
+      dotEl.style.background="#ff9800";
     } else {
-      statEl.innerText="Bağlantı: Aktif"; dotEl.style.background="#0f0";
+      statEl.innerText="Bağlantı: Aktif";
+      dotEl.style.background="#0f0";
       anyActive=true;
     }
 
-    if(ch.data.labels.length>=30){ ch.data.labels.shift(); ch.data.datasets.forEach(ds=>ds.data.shift()); }
-    ch.data.labels.push(""); ch.data.datasets[0].data.push(d.voltage.value); ch.data.datasets[1].data.push(d.current.value); ch.data.datasets[2].data.push(d.power.value); ch.update("none");
+    /* Chart update */
+    if(ch.data.labels.length>=30){
+      ch.data.labels.shift();
+      ch.data.datasets.forEach(ds=>ds.data.shift());
+    }
+    ch.data.labels.push("");
+    ch.data.datasets[0].data.push(v);
+    ch.data.datasets[1].data.push(a);
+    ch.data.datasets[2].data.push(w);
+    ch.update("none");
 
-    totalV+=d.voltage.value; totalA+=d.current.value; totalW+=d.power.value;
+    totalV+=v; totalA+=a; totalW+=w;
     lastReceived[i]=Date.now();
   }
+
   document.getElementById("sumV").innerText=totalV.toFixed(2)+" V";
-  document.getElementById("sumA").innerText=totalA.toFixed(2)+" A";
+  document.getElementById("sumA").innerText=totalA.toFixed(3)+" A";
   document.getElementById("sumW").innerText=totalW.toFixed(2)+" W";
 
-  // Global durum mesajı
   const globalEl=document.getElementById("globalStatusText");
+
   if(anyActive) globalEl.innerText="Bağlantı başarılı";
   else if(Date.now()-lastTs>OFFLINE_THRESHOLD) globalEl.innerText="Sistem ile iletişim yok";
   else globalEl.innerText="Bağlantı kontrol ediliyor...";
