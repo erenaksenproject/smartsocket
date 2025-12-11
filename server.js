@@ -114,6 +114,7 @@ app.post("/api/login", (req, res) => {
   failCount = 0;
 
   const deviceHash = getDeviceHash(req);
+  console.log("DEVICE HASH:", deviceHash);
   const trusted = loadTrusted();
 
   let isTrusted = false;
