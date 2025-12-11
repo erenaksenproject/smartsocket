@@ -6,9 +6,7 @@
 
 <title>Akıllı DC Güç Ünitesi</title>
 
-<link rel="icon" type="image/png" 
-href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
-
+<link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -25,7 +23,7 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
     --border:rgba(255,255,255,0.06);
   }
 
-  /* ---------------- LOGIN ---------------- */
+  /* LOGIN */
   #loginScreen{
     position:fixed; inset:0;
     background:var(--bg);
@@ -43,7 +41,10 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
     transition:0.25s;
   }
 
-  #loginBox.shake{ animation:shakeAnim 0.35s ease; }
+  /* WRONG PASSWORD: SHAKE + RED BORDER */
+  #loginBox.shake{
+    animation:shakeAnim 0.35s ease;
+  }
   @keyframes shakeAnim{
     0%{transform:translateX(0);}
     25%{transform:translateX(-6px);}
@@ -51,12 +52,12 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
     75%{transform:translateX(-6px);}
     100%{transform:translateX(0);}
   }
-
   #loginBox.errorBorder{
     border:1px solid #c62828;
     box-shadow:0 0 8px rgba(198,40,40,0.6);
   }
 
+  /* SUCCESS ANIMATION */
   #loginBox.success{
     border:1px solid #00c853 !important;
     box-shadow:0 0 14px rgba(0,200,83,0.8) !important;
@@ -74,19 +75,26 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
   }
 
   #passwordWrap{ position:relative;width:100%; }
+
   #togglePass{
-    position:absolute; right:10px; top:50%;
-    transform:translateY(-50%);cursor:pointer;font-size:18px;
+    position:absolute;
+    right:10px; top:50%;
+    transform:translateY(-50%);
+    cursor:pointer; font-size:18px;
   }
 
   #capsWarning{
-    color:#c62828;font-size:12px;display:none;margin-top:-6px;
+    color:#c62828; font-size:12px;
+    display:none; margin-top:-6px;
   }
 
   #loginBox button{
-    padding:10px;border-radius:8px;border:none;cursor:pointer;
-    background:#1E88E5;color:white;font-size:15px;font-weight:600;
+    padding:10px;border-radius:8px;border:none;
+    cursor:pointer;background:#1E88E5;color:white;
+    font-size:15px;font-weight:600;
   }
+
+  #blockMsg{color:#c62828;font-size:13px;}
 
   .logoutBtn{
     cursor:pointer;font-size:15px;
@@ -94,85 +102,31 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
     border:1px solid var(--border);background:var(--card);
   }
 
-  /* ---------------- DASHBOARD ---------------- */
-
-  .header{
-    display:flex;justify-content:space-between;align-items:center;
-    max-width:1200px;margin:0 auto 12px;padding:14px;
-  }
-
+  /* DASHBOARD STYLE */
+  .header{display:flex;justify-content:space-between;align-items:center;
+    max-width:1200px;margin:0 auto 12px;padding:14px;}
   .title{display:flex;flex-direction:column;font-weight:700;}
   .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
-
   .right-controls{display:flex;align-items:center;gap:12px;}
+  .clock{font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border);}
+  .lastData{font-size:12px;opacity:0.85;margin-top:6px;}
+  .themeToggle{padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:14px;}
 
-  .clock{
-    font-size:16px;font-weight:600;padding:8px 12px;
-    border-radius:10px;background:var(--card);
-    border:1px solid var(--border);
-  }
+  .summary{max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:0 14px;}
+  .sum-card{background:var(--card);border:1px solid var(--border);padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;}
 
-  .summary{
-    max-width:1200px;margin:8px auto;
-    display:flex;gap:12px;justify-content:center;
-    flex-wrap:wrap;padding:0 14px;
-  }
+  .grid{max-width:1200px;margin:14px auto;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 14px;}
+  @media(max-width:800px){.grid{grid-template-columns:1fr;}}
 
-  .sum-card{
-    background:var(--card);border:1px solid var(--border);
-    padding:12px 16px;border-radius:12px;
-    min-width:120px;text-align:center;
-  }
-
-  .grid{
-    max-width:1200px;margin:14px auto;display:grid;
-    grid-template-columns:repeat(2,1fr);gap:16px;padding:0 14px;
-  }
-  @media(max-width:800px){ .grid{grid-template-columns:1fr;} }
-
-  .card{
-    background:var(--card);border:1px solid var(--border);
-    border-radius:14px;padding:12px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);
-    transform:scale(0.9);transform-origin:top;
-  }
-  .card:hover{ transform:scale(0.94); }
-
-  .card-title{
-    display:flex;justify-content:space-between;align-items:center;
-    gap:8px;margin-bottom:8px;
-    font-weight:700;font-size:15px;
-  }
-
-  .status-dot{
-    width:12px;height:12px;border-radius:50%;display:inline-block;
-  }
-
-  /* ---------------------------------------------
-         DÜZELTİLEN BÖLÜM — YAN YANA GÖRÜNÜM
-  --------------------------------------------- */
-  .values-row{
-    display:flex;
-    flex-direction:row !important;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    width:100%;
-  }
-
-  .val-box{
-    flex:1 1 33%;
-    min-width:0;
-    text-align:center;
-  }
-
-  .val-num{
-    font-weight:800;font-size:16px;
-    display:flex;align-items:center;
-    justify-content:center;gap:8px;
-    white-space:nowrap;
-  }
-
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);transform-origin:top;transform:scale(0.9);}
+  .card:hover{transform:scale(0.94);}
+  .card-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;
+    font-weight:700;font-size:15px;}
+  .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
+  .values-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .val-box{text-align:center;flex:1;}
+  .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
   .tiny{font-size:12px;opacity:0.7;}
 
 </style>
@@ -223,9 +177,9 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
   </div>
 
   <div class="summary">
-    <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div id="sumV">0.0 V</div></div>
-    <div class="sum-card"><div class="sum-label">Toplam Akım</div><div id="sumA">0.00 A</div></div>
-    <div class="sum-card"><div class="sum-label">Toplam Güç</div><div id="sumW">0.0 W</div></div>
+    <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.0 V</div></div>
+    <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.00 A</div></div>
+    <div class="sum-card"><div class="sum-label">Toplam Güç</div><div class="sum-val" id="sumW">0.0 W</div></div>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -245,43 +199,51 @@ function saveToken(t){ localStorage.setItem("sessionToken", t); }
 function loadToken(){ return localStorage.getItem("sessionToken"); }
 function clearToken(){ localStorage.removeItem("sessionToken"); }
 
-/* Enter ile login */
-loginBox.addEventListener("keydown",(e)=>{ if(e.key==="Enter") handleLogin(); });
+/* ENTER ile login */
+loginBox.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ handleLogin(); }
+});
 
-/* Caps Lock */
+/* CAPS LOCK uyarısı */
 document.getElementById("password").addEventListener("keyup",(e)=>{
   document.getElementById("capsWarning").style.display =
     e.getModifierState("CapsLock") ? "block" : "none";
 });
 
 /* Şifre göster/gizle */
-document.getElementById("togglePass").onclick=()=>{
+document.getElementById("togglePass").onclick = ()=>{
   const p=document.getElementById("password");
   p.type = p.type==="password" ? "text" : "password";
 };
 
+/* Login */
 async function handleLogin(){
   loginBox.classList.remove("errorBorder","shake","success");
 
   const username=document.getElementById("username").value.trim();
   const password=document.getElementById("password").value;
 
-  const res=await fetch("/api/login",{
+  const res = await fetch("/api/login",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ username, password })
   });
-  const data=await res.json();
 
+  const data = await res.json();
+
+  /* BAŞARILI GİRİŞ */
   if(data.ok){
     loginBox.classList.add("success");
+
     setTimeout(()=>{
       saveToken(data.token);
       showDashboard();
     },400);
+
     return;
   }
 
+  /* HATALI GİRİŞ */
   loginBox.classList.add("errorBorder","shake");
 
   if(data.error==="wrong"){
@@ -291,48 +253,51 @@ async function handleLogin(){
     document.getElementById("blockMsg").innerText=`${data.remain} saniye sonra tekrar deneyin.`;
   }
   else if(data.error==="blocked30"){
-    document.getElementById("blockMsg").innerText="3 yanlış giriş, 30 saniye blok!";
+    document.getElementById("blockMsg").innerText="3 hatalı giriş! 30 saniye bloke edildi.";
   }
 }
 
+/* TOKEN KONTROL */
 async function checkToken(){
   const token=loadToken();
   if(!token) return false;
 
-  const res=await fetch("/api/check-token",{
-    headers:{ "authorization": token }
-  });
-  const data=await res.json();
+  const res = await fetch("/api/check-token",{ headers:{ "authorization": token } });
+  const data = await res.json();
   return data.ok===true;
 }
 
+/* LOGOUT */
 async function logout(){
   const token=loadToken();
-  if(token){
-    await fetch("/api/logout",{ method:"POST", headers:{ "authorization": token } });
-  }
+  if(token){ await fetch("/api/logout",{ method:"POST", headers:{ "authorization": token } }); }
   clearToken();
   document.getElementById("dashboard").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
   alert("Güç ünitesinden ayrılınıyor...");
 }
 
+/* DASHBOARD AÇ */
 function showDashboard(){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("dashboard").style.display="block";
 }
 
-window.addEventListener("load",async()=>{ if(await checkToken()) showDashboard(); });
+/* SAYFA AÇILINCA TOKEN CHECK */
+window.addEventListener("load", async()=>{
+  if(await checkToken()) showDashboard();
+});
+
 
 /* ============================================================
-                   DASHBOARD KODU (AYNEN KORUNDU)
+                DASHBOARD KODU (TAMAMI KORUNDU)
 ============================================================ */
 
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 const OFFLINE_THRESHOLD=10000;
 
 let grid=document.getElementById("grid");
-let charts=[],lastReceived=[];
+let charts=[],lastReceived=[],lastGlobal=Date.now();
 
 /* Saat */
 setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
@@ -341,10 +306,10 @@ setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().t
 document.getElementById("themeToggle").onclick=()=>{
   document.body.classList.toggle("dark");
   document.getElementById("themeToggle").innerText =
-    document.body.classList.contains("dark") ? "☀️" : "🌙";
+    document.body.classList.contains("dark")?"☀️":"🌙";
 };
 
-/* Kart Oluştur */
+/* Kart Oluşturma */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
   const html=`<div class="card" id="${id}">
@@ -380,22 +345,31 @@ for(let i=0;i<MON_NAMES.length;i++){
     data:{
       labels:[],
       datasets:[
-        {label:"Volt (V)",data:[],borderColor:"#1E90FF",backgroundColor:"rgba(30,144,255,0.06)",tension:0.25,pointRadius:0},
-        {label:"Akım (A)",data:[],borderColor:"#FF3B30",backgroundColor:"rgba(255,59,48,0.06)",tension:0.25,pointRadius:0},
-        {label:"Güç (W)",data:[],borderColor:"#00C853",backgroundColor:"rgba(0,200,83,0.06)",tension:0.25,pointRadius:0}
+        {label:"Volt (V)",data:[],borderColor:"#1E90FF",backgroundColor:"rgba(30,144,255,0.06)",pointRadius:0,tension:0.25},
+        {label:"Akım (A)",data:[],borderColor:"#FF3B30",backgroundColor:"rgba(255,59,48,0.06)",pointRadius:0,tension:0.25},
+        {label:"Güç (W)",data:[],borderColor:"#00C853",backgroundColor:"rgba(0,200,83,0.06)",pointRadius:0,tension:0.25}
       ]
     },
-    options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}
+    options:{ animation:false, plugins:{legend:{display:true}}, scales:{x:{display:false}} }
   });
 }
 
-const protocol = (location.protocol==="https:") ? "wss:" : "ws:";
-const WS_URL = protocol+"//"+location.host;
-const socket = new WebSocket(WS_URL);
+/* Flash */
+function flash(el,type){
+  el.classList.remove("flash-up","flash-down");
+  void el.offsetWidth;
+  el.classList.add(type==="up"?"flash-up":"flash-down");
+  setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
+}
+
+/* WebSocket */
+const protocol=(location.protocol==="https:")?"wss:":"ws:";
+const WS_URL=protocol+"//"+location.host;
+const socket=new WebSocket(WS_URL);
 
 let lastTs=0;
 
-/* Veri alma */
+/* Veri İşleme */
 socket.addEventListener("message",(e)=>{
   const msg=JSON.parse(e.data);
 
@@ -403,8 +377,7 @@ socket.addEventListener("message",(e)=>{
     lastTs=msg.ts;
     document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
     processData(msg.data||{});
-  }
-  else if(msg.type==="offline"){
+  } else if(msg.type==="offline"){
     makeAllOffline();
   }
 });
@@ -415,7 +388,7 @@ function fmtTs(ts){
   return d.toLocaleDateString()+" "+d.toLocaleTimeString();
 }
 
-/* Dashboard Güncelle */
+/* Dashboard Güncelleme */
 function processData(obj){
   let totalV=0,totalA=0,totalW=0;
   let anyActive=false;
@@ -445,6 +418,10 @@ function processData(obj){
     wEl.innerText=w.toFixed(2);
     tEl.innerText=d.temperature.value.toFixed(1);
 
+    flash(vEl,"up");
+    flash(aEl,"up");
+    flash(wEl,"up");
+
     if(a<0.005 || w<0.05){
       statEl.innerText="Enerji yok ⚠️";
       dotEl.style.background="#ff9800";
@@ -458,7 +435,6 @@ function processData(obj){
       ch.data.labels.shift();
       ch.data.datasets.forEach(ds=>ds.data.shift());
     }
-
     ch.data.labels.push("");
     ch.data.datasets[0].data.push(v);
     ch.data.datasets[1].data.push(a);
@@ -481,7 +457,7 @@ function processData(obj){
 
 /* Offline */
 function makeAllOffline(){
-  MON_NAMES.forEach((_,i)=>{
+  MON_NAMES.forEach((m,i)=>{
     document.getElementById("v"+i).innerText="-";
     document.getElementById("a"+i).innerText="-";
     document.getElementById("w"+i).innerText="-";
