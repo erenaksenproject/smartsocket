@@ -20,36 +20,49 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // =============================================================
-// LOGIN SİSTEMİ + MAKS 3 OTURUM + TOKEN SÜRESİ
+// LOGIN + MAKS 3 OTURUM + TOKEN SÜRESİ + CİHAZ TAKİBİ
 // =============================================================
 
 const VALID_USER = "smartsocket";
 const VALID_PASS = "panelpassword81";
 
-let activeTokens = [];  // { token, createdAt }
+// activeTokens → Artık device info saklıyor
+let activeTokens = [];  
+// { token, createdAt, lastSeen, ip, userAgent, deviceName }
 
-// 1 saatlik token süresi
-const TOKEN_LIFETIME = 60 * 60 * 1000;
+const TOKEN_LIFETIME = 60 * 60 * 1000; // 1 saat
 
-// Hatalı giriş blok sistemi
 let failCount = 0;
 let blockedUntil = 0;
 
-// Token temizleme (süresi dolanlar)
+// Cihaz ismini user-agent'tan üret
+function parseDeviceName(ua) {
+  if (!ua) return "Bilinmeyen cihaz";
+
+  if (ua.includes("Windows")) return "Windows PC";
+  if (ua.includes("Mac OS")) return "Mac";
+  if (ua.includes("Android")) return "Android Telefon";
+  if (ua.includes("iPhone")) return "iPhone";
+  if (ua.includes("iPad")) return "iPad";
+
+  return "Bilinmeyen cihaz";
+}
+
+// Süresi dolan tokenları sil
 function cleanupExpiredTokens() {
   const now = Date.now();
   activeTokens = activeTokens.filter(t => now - t.createdAt < TOKEN_LIFETIME);
 }
 
-// En eski token’ı sil (maks 3 oturum için)
+// Maksimum 3 oturum → En eskiyi sil
 function pruneTokenLimit() {
   if (activeTokens.length > 3) {
-    activeTokens.sort((a, b) => a.createdAt - b.createdAt); // en eski üstte
-    activeTokens.shift(); // en eski token silinir
+    activeTokens.sort((a, b) => a.createdAt - b.createdAt);
+    activeTokens.shift();
   }
 }
 
-// POST /api/login
+// ---------- LOGIN ----------
 app.post("/api/login", (req, res) => {
   const now = Date.now();
 
@@ -66,10 +79,19 @@ app.post("/api/login", (req, res) => {
   if (username === VALID_USER && password === VALID_PASS) {
     failCount = 0;
 
-    // yeni token oluştur
     const token = crypto.randomBytes(24).toString("hex");
 
-    activeTokens.push({ token, createdAt: now });
+    const userAgent = req.headers["user-agent"] || "Bilinmeyen";
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    activeTokens.push({
+      token,
+      createdAt: now,
+      lastSeen: now,
+      ip,
+      userAgent,
+      deviceName: parseDeviceName(userAgent)
+    });
 
     cleanupExpiredTokens();
     pruneTokenLimit();
@@ -77,6 +99,7 @@ app.post("/api/login", (req, res) => {
     return res.json({ ok: true, token });
   }
 
+  // Hatalı login
   failCount++;
 
   if (failCount >= 3) {
@@ -88,30 +111,24 @@ app.post("/api/login", (req, res) => {
   return res.status(401).json({ error: "wrong" });
 });
 
-// GET /api/check-token
+// ---------- TOKEN DOĞRULAMA ----------
 app.get("/api/check-token", (req, res) => {
   cleanupExpiredTokens();
 
   const token = req.headers["authorization"];
   const found = activeTokens.find(t => t.token === token);
 
-  if (found) {
-    return res.json({ ok: true });
-  }
-
+  if (found) return res.json({ ok: true });
   return res.json({ ok: false });
 });
 
-// Yeni → Oturum kalan süre bilgisi
+// ---------- TOKEN SÜRE BİLGİSİ ----------
 app.get("/api/session-info", (req, res) => {
   const token = req.headers["authorization"];
   cleanupExpiredTokens();
 
   const tk = activeTokens.find(t => t.token === token);
-
-  if (!tk) {
-    return res.json({ ok: false });
-  }
+  if (!tk) return res.json({ ok: false });
 
   const now = Date.now();
   const remain = TOKEN_LIFETIME - (now - tk.createdAt);
@@ -122,11 +139,37 @@ app.get("/api/session-info", (req, res) => {
   });
 });
 
-// POST /api/logout
+// ---------- OTURUM PING (her 15 sn front-end gönderir) ----------
+app.post("/api/ping", (req, res) => {
+  const token = req.headers["authorization"];
+  const now = Date.now();
+
+  const tk = activeTokens.find(t => t.token === token);
+  if (tk) tk.lastSeen = now;
+
+  return res.json({ ok: true });
+});
+
+// ---------- ÇIKIŞ ----------
 app.post("/api/logout", (req, res) => {
   const token = req.headers["authorization"];
   activeTokens = activeTokens.filter(t => t.token !== token);
   return res.json({ ok: true });
+});
+
+// ---------- YENİ: TÜM AKTİF OTURUMLARI GÖNDER ----------
+app.get("/api/sessions", (req, res) => {
+  cleanupExpiredTokens();
+
+  const list = activeTokens.map(t => ({
+    deviceName: t.deviceName,
+    ip: t.ip,
+    userAgent: t.userAgent,
+    createdAt: t.createdAt,
+    lastSeen: t.lastSeen
+  }));
+
+  return res.json({ ok: true, sessions: list });
 });
 
 // =============================================================
@@ -166,7 +209,7 @@ wss.on("connection", (ws) => {
   }));
 });
 
-// 10 saniye veri gelmezse offline
+// Offline bildirimi
 setInterval(() => {
   if (Date.now() - lastTimestamp > 10000) {
     const msg = JSON.stringify({
@@ -182,7 +225,6 @@ setInterval(() => {
 }, 3000);
 
 // =============================================================
-
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () =>
   console.log(`Server running on port ${PORT}`)
