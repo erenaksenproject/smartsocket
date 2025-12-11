@@ -1,254 +1,267 @@
-<!DOCTYPE html>
-<html lang="tr">
+<!DOCTYPE html> <!-- HTML belgesinin tipini tarayıcıya bildirir -->
+<html lang="tr"> <!-- Sayfanın dilinin Türkçe olduğunu belirtir -->
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8"> <!-- Türkçe karakter desteği sağlar -->
+<meta name="viewport" content="width=device-width,initial-scale=1"/> <!-- Mobil uyumluluk için ölçek ayarı -->
 
-<title>Akıllı DC Güç Ünitesi</title>
+<title>Akıllı DC Güç Ünitesi</title> <!-- Tarayıcı sekmesinde görünen başlık -->
 
-<link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="icon" type="image/png" href="https://upload.wikimedia.org/..."> <!-- Favicon (küçük ikon) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Grafik çizmek için Chart.js kütüphanesi -->
 
 <style>
 html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
+  height: 100%; /* Sayfanın tamamını kaplamasını sağlar */
+  background: var(--bg); /* Tema arka plan rengi */
+  color: var(--text); /* Tema yazı rengi */
 }
 
 html.dark, body.dark {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--bg); /* Karanlık mod arka plan */
+  color: var(--text); /* Karanlık modda yazı rengi */
 }
 
-/* -----------------------------------------------------
-   THEME VARIABLES
------------------------------------------------------ */
+/* ------------------------
+     TEMA DEĞİŞKENLERİ
+--------------------------- */
 body{
-  font-family:'Segoe UI',Arial,sans-serif;
-  margin:0;padding:0;
-  --bg:#eef2f6;--text:#111;
-  --card:rgba(255,255,255,0.6);
-  --border:rgba(255,255,255,0.5);
+  font-family:'Segoe UI',Arial,sans-serif; /* Sayfa yazı tipi */
+  margin:0;padding:0; /* Varsayılan boşlukları kaldırır */
+  --bg:#eef2f6; /* Açık mod arka plan */
+  --text:#111; /* Açık mod yazı rengi */
+  --card:rgba(255,255,255,0.6); /* Kart arka planı */
+  --border:rgba(255,255,255,0.5); /* Kart kenarlık rengi */
 }
 body.dark{
-  --bg:#0b0c0e;--text:#eee;
-  --card:rgba(20,20,20,0.48);
-  --border:rgba(255,255,255,0.06);
+  --bg:#0b0c0e; /* Karanlık mod arka plan */
+  --text:#eee; /* Karanlık mod yazı rengi */
+  --card:rgba(20,20,20,0.48); /* Karanlık mod kart */
+  --border:rgba(255,255,255,0.06); /* Karanlık mod kenarlık */
 }
 
-/* -----------------------------------------------------
-   LOGIN SCREEN
------------------------------------------------------ */
+/* ------------------------
+     GİRİŞ EKRANI
+--------------------------- */
 #loginScreen{
-  position:fixed; inset:0;
-  background:var(--bg);
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:18px;
+  position:fixed; inset:0; /* Ekranın tamamını kaplar */
+  background:var(--bg); /* Tema rengi */
+  display:flex; flex-direction:column; /* İçerikleri dikey hizalar */
+  align-items:center; justify-content:center; /* Ortalar */
+  gap:18px; /* Elemanlar arası boşluk */
 }
 #loginBox{
-  background:var(--card);
-  border:1px solid var(--border);
-  padding:22px 28px; width:300px;
-  border-radius:14px;
-  display:flex; flex-direction:column; gap:12px;
-  text-align:center;
-  transition:0.25s;
+  background:var(--card); /* Kart arka plan rengi */
+  border:1px solid var(--border); /* Kart kenarlığı */
+  padding:22px 28px; width:300px; /* Boyutlar */
+  border-radius:14px; /* Köşeleri yumuşatır */
+  display:flex; flex-direction:column; gap:12px; /* İç düzen */
+  text-align:center; /* Yazıyı ortalar */
+  transition:0.25s; /* Animasyon geçiş süresi */
 }
 #loginBox.shake{
-  animation:shakeAnim 0.35s ease;
+  animation:shakeAnim 0.35s ease; /* Yanlış girişte sallanma animasyonu */
 }
 @keyframes shakeAnim{
-  0%{transform:translateX(0);}
-  25%{transform:translateX(-6px);}
-  50%{transform:translateX(6px);}
-  75%{transform:translateX(-6px);}
-  100%{transform:translateX(0);}
+  0%{transform:translateX(0);} /* Animasyon başlangıcı */
+  25%{transform:translateX(-6px);} /* Sola kayma */
+  50%{transform:translateX(6px);} /* Sağa kayma */
+  75%{transform:translateX(-6px);} /* Sola kayma */
+  100%{transform:translateX(0);} /* Eski haline dönme */
 }
 #loginBox.errorBorder{
-  border:1px solid #c62828;
-  box-shadow:0 0 8px rgba(198,40,40,0.6);
+  border:1px solid #c62828; /* Hata olunca kırmızı çerçeve */
+  box-shadow:0 0 8px rgba(198,40,40,0.6); /* Hata parlama efekti */
 }
 #loginBox.success{
-  border:1px solid #00c853 !important;
-  box-shadow:0 0 14px rgba(0,200,83,0.8) !important;
-  animation:successPop 0.45s ease forwards;
+  border:1px solid #00c853 !important; /* Başarılı giriş yeşil çerçeve */
+  box-shadow:0 0 14px rgba(0,200,83,0.8) !important; /* Yeşil parıltı */
+  animation:successPop 0.45s ease forwards; /* "küçülerek kaybolma" animasyonu */
 }
 @keyframes successPop{
   0%{ transform:scale(1); opacity:1; }
   50%{ transform:scale(1.07); opacity:1; }
-  100%{ transform:scale(0.7); opacity:0; }
+  100%{ transform:scale(0.7); opacity:0; } /* Kutuyu gizler */
 }
 
 #loginBox input{
-  padding:10px;border-radius:8px;
-  border:1px solid var(--border);width:100%;
+  padding:10px; border-radius:8px; /* Köşeleri yuvarlama */
+  border:1px solid var(--border); width:100%; /* Kenarlık ve genişlik */
 }
-#passwordWrap{ position:relative;width:100%; }
+#passwordWrap{ position:relative;width:100%; } /* Göz ikonuna alan açar */
 #togglePass{
-  position:absolute;right:10px;top:50%;
+  position:absolute;right:10px;top:50%; /* Şifre göster ikonunun konumu */
   transform:translateY(-50%);
   cursor:pointer;font-size:18px;
 }
 #capsWarning{
-  color:#c62828;font-size:12px;
+  color:#c62828;font-size:12px; /* Caps lock uyarı yazısı */
   display:none;margin-top:-6px;
 }
 #loginBox button{
   padding:10px;border-radius:8px;border:none;
-  cursor:pointer;background:#1E88E5;color:white;
+  cursor:pointer;background:#1E88E5;color:white; /* Giriş butonu rengi */
   font-size:15px;font-weight:600;
 }
-#blockMsg{color:#c62828;font-size:13px;}
+#blockMsg{color:#c62828;font-size:13px;} /* Bloke mesajı */
 
+/* ------------------------
+    ÇIKIŞ BUTONU
+--------------------------- */
 .logoutBtn{
   cursor:pointer;font-size:15px;
-  padding:6px 10px;border-radius:8px;
-  border:1px solid var(--border);background:var(--card);
+  padding:6px 10px;border-radius:8px; /* Buton şekli */
+  border:1px solid var(--border);background:var(--card); /* Tema uyumlu */
 }
 
-/* -----------------------------------------------------
-   DASHBOARD
------------------------------------------------------ */
+/* ------------------------
+   DASHBOARD ALANI
+--------------------------- */
 .header{
-  display:flex;justify-content:space-between;align-items:center;
+  display:flex;justify-content:space-between; /* Sol / sağ bölümleri ayırır */
+  align-items:center;
   max-width:1200px;margin:0 auto 12px;padding:14px;
 }
-.title{display:flex;flex-direction:column;font-weight:700;}
-.subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
-.right-controls{display:flex;align-items:center;gap:12px;}
-.clock{font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;
-  background:var(--card);border:1px solid var(--border);}
-.lastData{font-size:12px;opacity:0.85;margin-top:6px;}
+.title{display:flex;flex-direction:column;font-weight:700;} /* Başlık alanı */
+.subtitle{font-size:12px;opacity:0.75;margin-top:4px;} /* Alt açıklama */
+.right-controls{display:flex;align-items:center;gap:12px;} /* Sağ üstteki işlev tuşları */
+.clock{
+  font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;
+  background:var(--card);border:1px solid var(--border); /* Canlı saat */
+}
+.lastData{font-size:12px;opacity:0.85;margin-top:6px;} /* Son veri zamnaı metni */
 .themeToggle{
   padding:6px 10px;border-radius:6px;
   border:1px solid var(--border);background:var(--card);
-  cursor:pointer;font-size:14px;
+  cursor:pointer;font-size:14px; /* Tema değiştir butonu */
 }
 
 .summary{
   max-width:1200px;margin:8px auto;
   display:flex;gap:12px;justify-content:center;
-  flex-wrap:wrap;padding:0 14px;
+  flex-wrap:wrap;padding:0 14px; /* Toplam değer kutuları */
 }
 .sum-card{
   background:var(--card);border:1px solid var(--border);
-  padding:12px 16px;border-radius:12px;
+  padding:12px 16px;border-radius:12px; /* Kart görünümü */
   min-width:120px;text-align:center;
 }
 
 .grid{
   max-width:1200px;margin:14px auto;
-  display:grid;grid-template-columns:repeat(2,1fr);
+  display:grid;grid-template-columns:repeat(2,1fr); /* 2 kolonlu kart düzeni */
   gap:16px;padding:0 14px;
 }
-@media(max-width:800px){ .grid{grid-template-columns:1fr;} }
+@media(max-width:800px){ .grid{grid-template-columns:1fr;} } /* Telefon için tek kolon */
 
 .card{
   background:var(--card);border:1px solid var(--border);
   border-radius:14px;padding:12px;
-  box-shadow:0 6px 18px rgba(0,0,0,0.06);
-  transform-origin:top;transform:scale(0.9);
+  box-shadow:0 6px 18px rgba(0,0,0,0.06); /* Hafif gölge efekti */
+  transform-origin:top;transform:scale(0.9); /* Hover animasyon başlangıcı */
 }
-.card:hover{transform:scale(0.94);}
+.card:hover{transform:scale(0.94);} /* Kart büyür */
 .card-title{
   display:flex;justify-content:space-between;align-items:center;
-  gap:8px;margin-bottom:8px;font-weight:700;font-size:15px;
+  gap:8px;margin-bottom:8px;font-weight:700;font-size:15px; /* Kart başlığı */
 }
-.status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
-.values-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.status-dot{
+  width:12px;height:12px;border-radius:50%; /* Küçük renkli durum ışığı */
+  display:inline-block;margin-left:8px;
+}
+.values-row{
+  display:flex;justify-content:space-between;gap:10px;margin-bottom:8px; /* Volt/Akım/Güç kutuları */
+}
 .val-box{text-align:center;flex:1;}
-.val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
-.tiny{font-size:12px;opacity:0.7;}
-
-/* -----------------------------------------------------
-   SESSION MODAL (son 10 dk uyarısı)
------------------------------------------------------ */
-#sessionModal {
-  position: fixed;
-  inset: 0;
-  backdrop-filter: blur(4px);
-  background: rgba(0,0,0,0.55);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+.val-num{
+  font-weight:800;font-size:16px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
+.tiny{font-size:12px;opacity:0.7;} /* Küçük yazılar */
+
+/* -------------------------
+   OTURUM UYARISI MODALI
+---------------------------- */
+#sessionModal {
+  position: fixed; inset: 0; /* Tüm ekran */
+  backdrop-filter: blur(4px); /* Arka planı blur yapar */
+  background: rgba(0,0,0,0.55); /* Karanlık şeffaf katman */
+  display: none; /* Varsayılan gizli */
+  align-items: center;justify-content: center;
+  z-index: 9999; /* En önde görünmesi için */
+}
+
 #sessionModalBox {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 24px;
-  border-radius: 12px;
-  width: 320px;
-  text-align: center;
-  animation: popIn .25s ease;
+  background: var(--card); /* Modal kutusunun arka planı */
+  border: 1px solid var(--border); /* Kenarlık */
+  padding: 24px; /* İç boşluk */
+  border-radius: 12px; /* Köşeleri yuvarlat */
+  width: 320px; /* Genişlik */
+  text-align: center; /* Ortalı içerik */
+  animation: popIn .25s ease; /* Açılma animasyonu */
 }
 @keyframes popIn {
-  0%{ transform: scale(0.7); opacity: 0; }
-  100%{ transform: scale(1); opacity: 1; }
+  0%{ transform: scale(0.7); opacity: 0; } /* Küçük ve görünmez başlar */
+  100%{ transform: scale(1); opacity: 1; } /* Normal boyutta görünür hale gelir */
 }
 #sessionModal button {
-  margin-top: 12px;
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
+  margin-top: 12px; /* Üstten boşluk */
+  width: 100%; /* Tam genişlik */
+  padding: 10px; /* İç boşluk */
+  border-radius: 8px; /* Yuvarlak buton */
+  border: none; /* Kenarlık yok */
+  cursor: pointer; /* Tıklanabilir işaret */
+  font-weight: 600; /* Kalın yazı */
 }
-#continueBtn { background:#1E88E5;color:white; }
-#logoutBtn2 { background:#b71c1c;color:white;margin-top:10px; }
+#continueBtn { background:#1E88E5;color:white; } /* Devam et butonu */
+#logoutBtn2 { background:#b71c1c;color:white;margin-top:10px; } /* Çıkış yap butonu */
 
-/* -----------------------------------------------------
-   CİHAZ LİSTESİ MODAL (🔌 Bağlı Cihazlar)
------------------------------------------------------ */
+/* ---------------------------------------------
+   🔌 BAĞLI CİHAZLAR MODALİ
+---------------------------------------------- */
 #devicesModal {
-  position: fixed;
-  inset: 0;
-  backdrop-filter: blur(4px);
-  background: rgba(0,0,0,0.55);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  position: fixed; inset: 0; /* Tüm ekranı kaplar */
+  backdrop-filter: blur(4px); /* Arka plan bulanık */
+  background: rgba(0,0,0,0.55); /* Koyu şeffaf arkaplan */
+  display: none; /* Başta kapalı */
+  align-items: center; justify-content: center; /* Ortala */
+  z-index: 9999; /* Üstte görünmesi için */
 }
 #devicesModalBox {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 20px;
-  border-radius: 12px;
-  width: 360px;
-  max-width: 95vw;
-  text-align: left;
-  animation: popIn .25s ease;
+  background: var(--card); /* Kart görünümü */
+  border: 1px solid var(--border); /* Kenarlık */
+  padding: 20px; /* İç boşluk */
+  border-radius: 12px; /* Köşe yumuşatma */
+  width: 360px; /* Modal genişliği */
+  max-width: 95vw; /* Mobilde taşmaması için */
+  text-align: left; /* Soldan hizalı içerik */
+  animation: popIn .25s ease; /* Açılma animasyonu */
 }
 #devicesList {
-  max-height: 260px;
-  overflow-y: auto;
+  max-height: 260px; /* Liste uzunluğu */
+  overflow-y: auto; /* Aşınca kaydırma */
   margin-top: 8px;
 }
 .deviceRow {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); /* Her cihaz satırı ayrım çizgisi */
   padding: 6px 0 10px 0;
 }
 .deviceRow:last-child {
-  border-bottom: none;
+  border-bottom: none; /* Son satır çizgisiz */
 }
 .deviceRow button {
   margin-top: 6px;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 6px; /* Yuvarlak buton */
   border: none;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  background:#b71c1c;
+  background:#b71c1c; /* Kırmızı çıkış butonu */
   color:white;
 }
 #closeDevicesBtn {
   margin-top: 12px;
-  width: 100%;
+  width: 100%; /* Tam genişlik */
   padding: 8px;
   border-radius: 8px;
   border: none;
@@ -260,31 +273,31 @@ body.dark{
 <body>
 
 <!-- LOGIN SCREEN -->
-<div id="loginScreen">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png"
-       style="width:110px;margin-bottom:10px;">
+<div id="loginScreen"> <!-- Kullanıcı adı/şifre ekranı -->
+  <img src="https://upload.wikimedia.org/...svg.png"
+       style="width:110px;margin-bottom:10px;"> <!-- Logo -->
 
-  <div id="loginBox">
+  <div id="loginBox"> <!-- Login kutusu -->
     <h3>Giriş Yap</h3>
 
-    <input id="username" placeholder="Kullanıcı adı">
+    <input id="username" placeholder="Kullanıcı adı"> <!-- Kullanıcı adı alanı -->
 
-    <div id="passwordWrap">
-      <input id="password" type="password" placeholder="Şifre">
-      <span id="togglePass">👁️</span>
+    <div id="passwordWrap"> <!-- Şifre alanını ve göz ikonunu sarar -->
+      <input id="password" type="password" placeholder="Şifre"> <!-- Şifre inputu -->
+      <span id="togglePass">👁️</span> <!-- Şifreyi göster/gizle butonu -->
     </div>
 
-    <div id="capsWarning">Caps Lock açık!</div>
+    <div id="capsWarning">Caps Lock açık!</div> <!-- Caps Lock uyarısı -->
 
-    <button onclick="handleLogin()">Giriş</button>
+    <button onclick="handleLogin()">Giriş</button> <!-- Login butonu -->
 
-    <div id="loginError" style="color:#c62828;font-size:13px;"></div>
-    <div id="blockMsg"></div>
+    <div id="loginError" style="color:#c62828;font-size:13px;"></div> <!-- Hata mesajı -->
+    <div id="blockMsg"></div> <!-- Bloke mesajı -->
   </div>
 </div>
 
-<!-- SESSION MODAL (10 dk kala) -->
-<div id="sessionModal">
+<!-- SESSION MODAL -->
+<div id="sessionModal"> <!-- Oturum süresi bitmek üzere uyarısı -->
   <div id="sessionModalBox">
     <h3>Oturum Süreniz Dolmak Üzere</h3>
     <p>Yaklaşık <span id="remainingText">10</span> dakika içinde otomatik çıkış yapılacak.</p>
@@ -294,164 +307,164 @@ body.dark{
 </div>
 
 <!-- CİHAZ LİSTESİ MODAL -->
-<div id="devicesModal">
+<div id="devicesModal"> <!-- Bağlı cihazlar ekranı -->
   <div id="devicesModalBox">
     <h3>🔌 Bağlı Cihazlar</h3>
-    <div id="devicesList" class="tiny"></div>
+    <div id="devicesList" class="tiny"></div> <!-- Cihaz listesi -->
     <button id="closeDevicesBtn">Kapat</button>
   </div>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
+<div id="dashboard" style="display:none;"> <!-- Giriş sonrası açılan panel -->
 
-  <div class="header">
+  <div class="header"> <!-- Üst bar -->
     <div class="title">
-      <div>Akıllı DC Güç Ünitesi</div>
-      <div class="subtitle" id="globalStatusText">Bağlantı kontrol ediliyor...</div>
+      <div>Akıllı DC Güç Ünitesi</div> <!-- Üst başlık -->
+      <div class="subtitle" id="globalStatusText">Bağlantı kontrol ediliyor...</div> <!-- Sistem durumu -->
     </div>
 
-    <div class="right-controls">
-      <div class="clock" id="realtimeClock">--:--:--</div>
-      <button class="themeToggle" id="themeToggle">🌙</button>
-      <button class="themeToggle" id="devicesBtn">🔌 Bağlı Cihazlar</button>
-      <button class="logoutBtn" onclick="logout()">Çıkış</button>
-      <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
+    <div class="right-controls"> <!-- Sağ üst kontrol butonları -->
+      <div class="clock" id="realtimeClock">--:--:--</div> <!-- Canlı saat -->
+      <button class="themeToggle" id="themeToggle">🌙</button> <!-- Tema butonu -->
+      <button class="themeToggle" id="devicesBtn">🔌 Bağlı Cihazlar</button> <!-- Cihaz listesi -->
+      <button class="logoutBtn" onclick="logout()">Çıkış</button> <!-- Çıkış -->
+      <div class="lastData tiny" id="lastDataTs">Son veri: —</div> <!-- Son veri zamanı -->
     </div>
   </div>
 
-  <div class="summary">
+  <div class="summary"> <!-- Üstteki toplam değer kartları -->
     <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.0 V</div></div>
     <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.00 A</div></div>
     <div class="sum-card"><div class="sum-label">Toplam Güç</div><div class="sum-val" id="sumW">0.0 W</div></div>
   </div>
 
-  <div class="grid" id="grid"></div>
+  <div class="grid" id="grid"></div> <!-- Sensör kartları buraya oluşturulacak -->
 </div>
 
 <script>
 /* ============================================================
-   LOGIN + TOKEN
+   LOGIN + TOKEN SİSTEMİ
 ============================================================ */
-const loginBox = document.getElementById("loginBox");
+const loginBox = document.getElementById("loginBox"); /* Login kutusunu seçer */
 
-function saveToken(t){ localStorage.setItem("sessionToken", t); }
-function loadToken(){ return localStorage.getItem("sessionToken"); }
-function clearToken(){ localStorage.removeItem("sessionToken"); }
+function saveToken(t){ localStorage.setItem("sessionToken", t); } /* Oturum token kaydetme */
+function loadToken(){ return localStorage.getItem("sessionToken"); } /* Tokeni okur */
+function clearToken(){ localStorage.removeItem("sessionToken"); } /* Tokeni siler */
 
-/* ENTER ile login */
+/* ENTER tuşu ile giriş */
 loginBox.addEventListener("keydown", e=>{
-  if(e.key==="Enter") handleLogin();
+  if(e.key==="Enter") handleLogin(); /* Enter'a basınca giriş yapılır */
 });
 
-/* CAPS LOCK kontrolü */
+/* CAPS LOCK uyarısı */
 document.getElementById("password").addEventListener("keyup", e=>{
   document.getElementById("capsWarning").style.display =
-    e.getModifierState("CapsLock") ? "block" : "none";
+    e.getModifierState("CapsLock") ? "block" : "none"; /* Caps Lock açık mı? */
 });
 
 /* Şifre göster/gizle */
 document.getElementById("togglePass").onclick = ()=>{
   const p=document.getElementById("password");
-  p.type = p.type==="password" ? "text" : "password";
+  p.type = p.type==="password" ? "text" : "password"; /* Şifre görünür/gizli */
 };
 
-/* LOGIN */
+/* LOGIN İŞLEMİ */
 async function handleLogin(){
-  loginBox.classList.remove("errorBorder","shake","success");
+  loginBox.classList.remove("errorBorder","shake","success"); /* Eski efektleri kaldır */
 
-  const username=document.getElementById("username").value.trim();
-  const password=document.getElementById("password").value;
+  const username=document.getElementById("username").value.trim(); /* Kullanıcı adı */
+  const password=document.getElementById("password").value; /* Şifre */
 
-  const res=await fetch("/api/login",{
+  const res=await fetch("/api/login",{ /* sunucuya login isteği */
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ username,password })
   });
 
-  const data=await res.json();
+  const data=await res.json(); /* Sunucu cevabı */
 
   if(data.ok){
-    loginBox.classList.add("success");
+    loginBox.classList.add("success"); /* Başarılı efekt */
     setTimeout(()=>{
-      saveToken(data.token);
-      showDashboard();
+      saveToken(data.token); /* Tokeni kaydet */
+      showDashboard(); /* Dashboard'a geçiş */
     },450);
     return;
   }
 
-  loginBox.classList.add("errorBorder","shake");
+  loginBox.classList.add("errorBorder","shake"); /* Hatalı giriş efekti */
 
   if(data.error==="wrong"){
-    document.getElementById("loginError").innerText="Hatalı kullanıcı adı veya şifre!";
+    document.getElementById("loginError").innerText="Hatalı kullanıcı adı veya şifre!"; /* Yanlış giriş */
   }
   else if(data.error==="blocked"){
-    document.getElementById("blockMsg").innerText=`${data.remain} saniye sonra tekrar deneyin.`;
+    document.getElementById("blockMsg").innerText=`${data.remain} saniye sonra tekrar deneyin.`; /* Geçici blok */
   }
   else if(data.error==="blocked30"){
-    document.getElementById("blockMsg").innerText="3 hatalı giriş! 30 saniye bloke edildi.";
+    document.getElementById("blockMsg").innerText="3 hatalı giriş! 30 saniye bloke edildi."; /* 3 yanlış deneme */
   }
 }
 
-/* TOKEN CHECK */
+/* TOKEN KONTROLÜ (Sayfa açılınca oturum geçerli mi?) */
 async function checkToken(){
-  const token=loadToken();
-  if(!token) return false;
+  const token=loadToken(); /* Kayıtlı token'i oku */
+  if(!token) return false; /* Token yoksa giriş yapılmamış demektir */
 
-  const res=await fetch("/api/check-token",{ headers:{ "authorization":token } });
+  const res=await fetch("/api/check-token",{ headers:{ "authorization":token } }); /* Token doğrulama isteği */
   const data=await res.json();
-  return data.ok===true;
+  return data.ok===true; /* Token geçerliyse true döner */
 }
 
-/* LOGOUT */
-let sessionTimer = null;
+/* LOGOUT (Çıkış işlemi) */
+let sessionTimer = null; /* Oturum zamanlayıcısını tutar */
 async function logout(){
   const token = loadToken();
   if(token){
-    await fetch("/api/logout",{
+    await fetch("/api/logout",{ /* Sunucuya çıkış isteği gönderir */
       method:"POST",
       headers:{ "authorization":token }
     });
   }
 
-  clearToken();
-  if(sessionTimer) { clearInterval(sessionTimer); sessionTimer=null; }
+  clearToken(); /* Tarayıcıdaki token’i sil */
+  if(sessionTimer) { clearInterval(sessionTimer); sessionTimer=null; } /* Sayaç varsa durdur */
 
-  // LOGIN BOX'u eski haline getir
-  loginBox.classList.remove("success", "errorBorder", "shake");
-  loginBox.style.opacity = "1";
+  /* LOGIN BOX’u sıfırla (güzel bir reset görüntüsü) */
+  loginBox.classList.remove("success", "errorBorder", "shake"); 
+  loginBox.style.opacity = "1"; 
   loginBox.style.transform = "scale(1)";
 
-  // INPUT alanlarını temizle (güzel bir reset olsun)
+  /* Input kutularını temizle */
   document.getElementById("username").value = "";
   document.getElementById("password").value = "";
   document.getElementById("loginError").innerText = "";
   document.getElementById("blockMsg").innerText = "";
 
+  /* Dashboard’ı gizle, login ekranını aç */
   document.getElementById("dashboard").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
 
-  alert("Güç ünitesinden ayrılınıyor...");
+  alert("Güç ünitesinden ayrılınıyor..."); /* Kullanıcıya mesaj */
 }
 
-
-/* DASHBOARD AÇ */
+/* DASHBOARD AÇ (Giriş başarılı olduğunda çağrılır) */
 function showDashboard(){
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  startSessionWatcher();
+  document.getElementById("loginScreen").style.display="none"; /* Login ekranını kapat */
+  document.getElementById("dashboard").style.display="block"; /* Dashboard'ı aç */
+  startSessionWatcher(); /* Oturum süresi takibini başlat */
 }
 
-/* SAYFA AÇILINCA TOKEN KONTROL */
+/* SAYFA AÇILDIĞINDA OTOMATİK GİRİŞ KONTROLÜ */
 window.addEventListener("load", async()=>{
-  if(await checkToken()) showDashboard();
+  if(await checkToken()) showDashboard(); /* Token geçerliyse direkt Dashboard'a geçir */
 });
 
 /* ============================================================
-   OTURUM SÜRESİ TAKİBİ (1 saat + 10 dk kala uyarı)
+   OTURUM SÜRESİ TAKİBİ (1 saat + bitmeye 10 dk kala uyarı)
 ============================================================ */
-let remainingMs = 0;
-let modalShown = false;
+let remainingMs = 0; /* Kalan süre (ms) */
+let modalShown = false; /* Uyarı gösterildi mi? */
 
 async function getSessionInfo(){
   const token = loadToken();
@@ -464,21 +477,22 @@ async function getSessionInfo(){
   const data = await res.json();
 
   if(!data.ok){
-    alert("Oturum süresi doldu.");
-    logout();
+    alert("Oturum süresi doldu."); 
+    logout(); /* Oturum bitmişse çıkış yap */
     return;
   }
 
-  remainingMs = data.remainMs;
+  remainingMs = data.remainMs; /* Sunucudan gelen kalan süre */
 
-  // 10 dakika = 600000 ms
+  /* Bitmeye 10 dakika kala uyarı aç */
   if(remainingMs <= 10*60*1000 && remainingMs > 0 && !modalShown){
     modalShown = true;
-    const mins = Math.max(1, Math.ceil(remainingMs/60000));
+    const mins = Math.max(1, Math.ceil(remainingMs/60000)); /* Dakikaya çevir */
     document.getElementById("remainingText").innerText = mins;
-    document.getElementById("sessionModal").style.display = "flex";
+    document.getElementById("sessionModal").style.display = "flex"; /* Uyarı açılır */
   }
 
+  /* Süre bittiyse direkt çıkış */
   if(remainingMs <= 0){
     alert("Oturum süresi doldu.");
     logout();
@@ -487,9 +501,10 @@ async function getSessionInfo(){
 
 function startSessionWatcher(){
   if(sessionTimer) clearInterval(sessionTimer);
-  sessionTimer = setInterval(getSessionInfo, 5000);
+  sessionTimer = setInterval(getSessionInfo, 5000); /* Her 5 saniyede kontrol et */
 }
 
+/* “Devam Et” butonu – oturumu uzatır */
 document.getElementById("continueBtn").onclick = async ()=>{
   const token = loadToken();
   if(!token) return;
@@ -502,23 +517,24 @@ document.getElementById("continueBtn").onclick = async ()=>{
 
   if(data.ok){
     modalShown = false;
-    document.getElementById("sessionModal").style.display="none";
-    await getSessionInfo();
+    document.getElementById("sessionModal").style.display="none"; /* Uyarıyı kapat */
+    await getSessionInfo(); /* Yeni süreyi tekrar al */
   }
 };
 
+/* “Çıkış Yap” butonu */
 document.getElementById("logoutBtn2").onclick = ()=> logout();
 
 /* ============================================================
    🔌 BAĞLI CİHAZLAR MODALİ
 ============================================================ */
-document.getElementById("devicesBtn").onclick = openDevicesModal;
+document.getElementById("devicesBtn").onclick = openDevicesModal; /* Buton tıklanınca modal aç */
 document.getElementById("closeDevicesBtn").onclick = () => {
-  document.getElementById("devicesModal").style.display = "none";
+  document.getElementById("devicesModal").style.display = "none"; /* Modalı kapat */
 };
 
 function formatMins(ms){
-  return Math.max(0, Math.round(ms/60000));
+  return Math.max(0, Math.round(ms/60000)); /* ms → dakika çeviri */
 }
 
 async function openDevicesModal(){
@@ -538,9 +554,9 @@ async function openDevicesModal(){
     return;
   }
 
-  const list = data.sessions || [];
+  const list = data.sessions || []; /* Aktif oturum listesi */
   const container = document.getElementById("devicesList");
-  container.innerHTML = "";
+  container.innerHTML = ""; /* Temizle */
 
   if(list.length === 0){
     container.innerHTML = "<div class='tiny'>Aktif oturum bulunamadı.</div>";
@@ -549,11 +565,12 @@ async function openDevicesModal(){
       const div = document.createElement("div");
       div.className = "deviceRow";
 
-      const createdStr = new Date(s.createdAt).toLocaleString();
-      const mins = formatMins(s.remainMs);
-      const ua = (s.userAgent || "Bilinmeyen cihaz");
-      const shortUa = ua.length > 60 ? ua.slice(0,57) + "..." : ua;
+      const createdStr = new Date(s.createdAt).toLocaleString(); /* Giriş zamanı */
+      const mins = formatMins(s.remainMs); /* Kalan süre dakika */
+      const ua = (s.userAgent || "Bilinmeyen cihaz"); /* Tarayıcı bilgisi */
+      const shortUa = ua.length > 60 ? ua.slice(0,57) + "..." : ua; /* Çok uzunsa kısalt */
 
+      /* Cihaz kartı HTML */
       div.innerHTML = `
         <div class="tiny"><strong>${idx+1}.</strong> ${shortUa}</div>
         <div class="tiny">IP: ${s.ip || "-"} | Giriş: ${createdStr}</div>
@@ -564,12 +581,13 @@ async function openDevicesModal(){
     });
   }
 
-  document.getElementById("devicesModal").style.display = "flex";
+  document.getElementById("devicesModal").style.display = "flex"; /* Modalı aç */
 
+  /* Her butona tıklanınca oturumu sonlandır */
   document.querySelectorAll(".deviceLogoutBtn").forEach(btn=>{
     btn.onclick = async ()=>{
-      const targetToken = btn.getAttribute("data-token");
-      const myToken = loadToken();
+      const targetToken = btn.getAttribute("data-token"); /* Hedef oturum tokeni */
+      const myToken = loadToken(); /* Bu tarayıcıdaki token */
 
       await fetch("/api/logout-token",{
         method:"POST",
@@ -582,121 +600,156 @@ async function openDevicesModal(){
 
       if(targetToken === myToken){
         document.getElementById("devicesModal").style.display="none";
-        logout();
+        logout(); /* Eğer bu cihazın oturumu kapandıysa logout */
       } else {
-        openDevicesModal(); // listeyi tazele
+        openDevicesModal(); /* Listeyi yenile */
       }
     };
   });
 }
 
 /* ============================================================
-   DASHBOARD KODU (Sensör verisi)
+   DASHBOARD KODU (Sensör verilerini işleme)
 ============================================================ */
-const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
-const OFFLINE_THRESHOLD=10000;
 
-let grid=document.getElementById("grid");
-let charts=[],lastReceived=[],lastGlobal=Date.now();
+const MON_NAMES=[
+  "DC Soket Çıkışı 1",
+  "DC Soket Çıkışı 2",
+  "USB-A Portu 1",
+  "USB-A Portu 2"
+]; /* Her karta verilecek isimler */
 
-/* Saat */
-setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
+const OFFLINE_THRESHOLD=10000; /* 10 saniye veri gelmezse “offline” kabul et */
 
-/* Tema */
+let grid=document.getElementById("grid"); /* Kartların yerleştirileceği alan */
+let charts=[],lastReceived=[],lastGlobal=Date.now(); /* Grafik ve zaman takip değişkenleri */
+
+/* CANLI SAAT */
+setInterval(()=>{
+  document.getElementById("realtimeClock").innerText=
+    new Date().toLocaleTimeString(); /* Her saniye saati güncelle */
+},1000);
+
+/* TEMA DEĞİŞTİRME BUTONU */
 document.getElementById("themeToggle").onclick=()=>{
-  document.body.classList.toggle("dark");
-  document.documentElement.classList.toggle("dark");
+  document.body.classList.toggle("dark"); /* Gövdeyi karanlık/açık moda al */
+  document.documentElement.classList.toggle("dark"); /* HTML etiketine de uygula */
   document.getElementById("themeToggle").innerText =
-    document.body.classList.contains("dark")?"☀️":"🌙";
+    document.body.classList.contains("dark") ? "☀️" : "🌙"; /* İkonu değiştir */
 };
 
-/* Kartlar */
+/* KARTLARIN OLUŞTURULMASI */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
-  const html=`<div class="card" id="${id}">
-    <div class="card-title">
-      <strong>${MON_NAMES[i]}</strong>
-      <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
-    </div>
 
-    <div class="values-row">
-      <div class="val-box"><div class="val-num"><span>🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
-      <div class="val-box"><div class="val-num"><span>🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
-      <div class="val-box"><div class="val-num"><span>⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
-    </div>
+  /* Her kartın HTML yapısı */
+  const html=`
+    <div class="card" id="${id}">
+      <div class="card-title">
+        <strong>${MON_NAMES[i]}</strong> <!-- Kart başlığı -->
+        <div id="dot${i}" class="status-dot" style="background:#f44;"></div> <!-- Durum ışığı -->
+      </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
-      <div class="tiny" id="stat${i}">Durum: —</div>
-    </div>
+      <div class="values-row">
+        <div class="val-box">
+          <div class="val-num"><span>🔋</span><span id="v${i}">--</span></div>
+          <div class="val-label">Volt (V)</div>
+        </div>
+        <div class="val-box">
+          <div class="val-num"><span>🧲</span><span id="a${i}">--</span></div>
+          <div class="val-label">Akım (A)</div>
+        </div>
+        <div class="val-box">
+          <div class="val-num"><span>⚡</span><span id="w${i}">--</span></div>
+          <div class="val-label">Güç (W)</div>
+        </div>
+      </div>
 
-    <canvas id="chart${i}" height="110"></canvas>
-  </div>`;
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div> <!-- Sıcaklık -->
+        <div class="tiny" id="stat${i}">Durum: —</div> <!-- Durum mesajı -->
+      </div>
+
+      <canvas id="chart${i}" height="110"></canvas> <!-- Grafik alanı -->
+    </div>
+  `;
 
   const div=document.createElement("div");
   div.innerHTML=html;
-  grid.appendChild(div.firstElementChild);
-  lastReceived[i]=0;
+  grid.appendChild(div.firstElementChild); /* Kartı sayfaya ekle */
+
+  lastReceived[i]=0; /* Bu kart için son veri zamanını tut */
 }
 
-/* Grafikler */
+/* GRAFİK OLUŞTURMA */
 for(let i=0;i<MON_NAMES.length;i++){
   charts[i]=new Chart(document.getElementById("chart"+i).getContext("2d"),{
-    type:"line",
+    type:"line", /* Çizgi grafik */
     data:{
-      labels:[],
+      labels:[], /* Zaman ekseni (gizli olacak) */
       datasets:[
         {label:"Volt (V)",data:[],borderColor:"#1E90FF",backgroundColor:"rgba(30,144,255,0.06)",pointRadius:0,tension:0.25},
         {label:"Akım (A)",data:[],borderColor:"#FF3B30",backgroundColor:"rgba(255,59,48,0.06)",pointRadius:0,tension:0.25},
         {label:"Güç (W)",data:[],borderColor:"#00C853",backgroundColor:"rgba(0,200,83,0.06)",pointRadius:0,tension:0.25}
       ]
     },
-    options:{ animation:false, plugins:{legend:{display:true}}, scales:{x:{display:false}} }
+    options:{
+      animation:false, /* Grafik animasyonu kapalı (daha akıcı veri) */
+      plugins:{ legend:{display:true} }, /* Üstte Volt/Akım/Güç başlıkları */
+      scales:{ x:{display:false} } /* X eksenini gizle */
+    }
   });
 }
 
-/* Flash efekt */
+/* DEĞERLER GÜNCELLENİNCE FLASH EFEKTİ */
 function flash(el,type){
-  el.classList.remove("flash-up","flash-down");
-  void el.offsetWidth;
-  el.classList.add(type==="up"?"flash-up":"flash-down");
-  setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
+  el.classList.remove("flash-up","flash-down"); /* Önce eski efekti kaldır */
+  void el.offsetWidth; /* CSS reset hilesi */
+  el.classList.add(type==="up"?"flash-up":"flash-down"); /* Efekti ekle */
+  setTimeout(()=>el.classList.remove("flash-up","flash-down"),400); /* 400ms sonra sil */
 }
 
-/* WebSocket */
-const protocol=(location.protocol==="https:")?"wss:":"ws:";
-const WS_URL=protocol+"//"+location.host;
-const socket=new WebSocket(WS_URL);
+/* ============================================================
+   WEBSOCKET BAĞLANTISI (CANLI VERİ)
+============================================================ */
 
-let lastTs=0;
+const protocol=(location.protocol==="https:")?"wss:":"ws:"; /* HTTPS→WSS otomatik */
+const WS_URL=protocol+"//"+location.host; /* WebSocket adresi */
+const socket=new WebSocket(WS_URL); /* Bağlantıyı aç */
 
-/* Veri geldiğinde dashboard güncelle */
+let lastTs=0; /* Son veri zaman damgası */
+
+/* Gelen veriyi işleme */
 socket.addEventListener("message",(e)=>{
-  const msg=JSON.parse(e.data);
+  const msg=JSON.parse(e.data); /* Sunucudan gelen JSON */
 
-  if(msg.type==="init"||msg.type==="update"){
-    lastTs=msg.ts;
-    document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
-    processData(msg.data||{});
-  } else if(msg.type==="offline"){
-    makeAllOffline();
+  if(msg.type==="init" || msg.type==="update"){
+    lastTs=msg.ts; /* Zaman damgasını al */
+    document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs); /* Göster */
+    processData(msg.data||{}); /* Veriyi işle */
+  }
+  else if(msg.type==="offline"){
+    makeAllOffline(); /* Sunucu bağlantısı koparsa tüm kartları offline yap */
   }
 });
 
-/* Zaman formatı */
+/* Tarih formatı */
 function fmtTs(ts){
   if(!ts) return "—";
   const d=new Date(ts);
-  return d.toLocaleDateString()+" "+d.toLocaleTimeString();
+  return d.toLocaleDateString()+" "+d.toLocaleTimeString(); /* Gün + saat formatı */
 }
 
-/* Dashboard veri işleme */
+/* ============================================================
+   VERİ İŞLEME FONKSİYONU (KARTLARI GÜNCELLER)
+============================================================ */
+
 function processData(obj){
-  let totalV=0,totalA=0,totalW=0;
-  let anyActive=false;
+  let totalV=0,totalA=0,totalW=0; /* Toplam değerler */
+  let anyActive=false; /* Herhangi bir çıkış aktif mi? */
 
   for(let i=0;i<MON_NAMES.length;i++){
-    const d=obj["monitor"+(i+1)]?.hat1;
+    const d=obj["monitor"+(i+1)]?.hat1; /* monitor1.hat1 -> sensör verisi */
 
     const vEl=document.getElementById("v"+i);
     const aEl=document.getElementById("a"+i);
@@ -707,59 +760,72 @@ function processData(obj){
     const ch=charts[i];
 
     if(!d){
-      vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-";
+      vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-"; /* Veri yok */
       statEl.innerText="Bağlantı yok — kontrol edilmeli";
-      dotEl.style.background="red";
-      continue;
+      dotEl.style.background="red"; /* Durum kırmızı */
+      continue; /* Bu kartı atla */
     }
 
     const v=d.voltage.value;
     const a=d.current.value;
     const w=d.power.value;
 
+    /* Verileri yaz */
     vEl.innerText=v.toFixed(2);
     aEl.innerText=a.toFixed(3);
     wEl.innerText=w.toFixed(2);
     tEl.innerText=d.temperature.value.toFixed(1);
 
+    /* Küçük animasyon */
     flash(vEl,"up");
     flash(aEl,"up");
     flash(wEl,"up");
 
+    /* Enerji çok düşükse uyarı */
     if(a<0.005 || w<0.05){
       statEl.innerText="Enerji yok ⚠️";
-      dotEl.style.background="#ff9800";
+      dotEl.style.background="#ff9800"; /* Turuncu */
     } else {
       statEl.innerText="Bağlantı: Aktif";
-      dotEl.style.background="#0f0";
+      dotEl.style.background="#0f0"; /* Yeşil */
       anyActive=true;
     }
 
+    /* Grafik ekleme */
     if(ch.data.labels.length>=30){
-      ch.data.labels.shift();
-      ch.data.datasets.forEach(ds=>ds.data.shift());
+      ch.data.labels.shift(); /* En eskiyi sil */
+      ch.data.datasets.forEach(ds=>ds.data.shift()); /* Tüm grafik serilerinden sil */
     }
-    ch.data.labels.push("");
+
+    ch.data.labels.push(""); /* Yeni zaman noktası */
     ch.data.datasets[0].data.push(v);
     ch.data.datasets[1].data.push(a);
     ch.data.datasets[2].data.push(w);
-    ch.update("none");
+    ch.update("none"); /* Grafik animasyonsuz güncelle */
 
-    totalV+=v; totalA+=a; totalW+=w;
+    /* Toplamları hesapla */
+    totalV+=v;
+    totalA+=a;
+    totalW+=w;
   }
 
+  /* Toplam değerleri yaz */
   document.getElementById("sumV").innerText=totalV.toFixed(2)+" V";
   document.getElementById("sumA").innerText=totalA.toFixed(3)+" A";
   document.getElementById("sumW").innerText=totalW.toFixed(2)+" W";
 
   const globalEl=document.getElementById("globalStatusText");
 
+  /* Genel sistem durumu */
   if(anyActive) globalEl.innerText="Bağlantı başarılı";
   else if(Date.now()-lastTs>OFFLINE_THRESHOLD) globalEl.innerText="Sistem ile iletişim yok";
   else globalEl.innerText="Bağlantı kontrol ediliyor...";
 }
 
-/* Offline durumunda kartları sıfırla */
+/* ============================================================
+   TÜM KARTLARI OFFLINE YAP (WebSocket bağlantısı koptuğunda)
+============================================================ */
+
 function makeAllOffline(){
   MON_NAMES.forEach((m,i)=>{
     document.getElementById("v"+i).innerText="-";
@@ -767,10 +833,10 @@ function makeAllOffline(){
     document.getElementById("w"+i).innerText="-";
     document.getElementById("t"+i).innerText="-";
     document.getElementById("stat"+i).innerText="Sistem ile iletişim yok";
-    document.getElementById("dot"+i).style.background="red";
+    document.getElementById("dot"+i).style.background="red"; /* Kırmızı ışık */
   });
 
-  document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
+  document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok"; /* Genel uyarı */
 }
 </script>
 
