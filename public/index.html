@@ -11,6 +11,9 @@
 
 <style>
 
+/* ==========================================================
+   GLOBAL BACKGROUND + THEME FIX
+========================================================== */
 html, body {
   height: 100%;
   background: var(--bg);
@@ -22,9 +25,9 @@ html.dark, body.dark {
   color: var(--text);
 }
 
-/* -----------------------------------------------------
+/* ==========================================================
    THEME VARIABLES
------------------------------------------------------ */
+========================================================== */
 body{
   font-family:'Segoe UI',Arial,sans-serif;
   margin:0;padding:0;
@@ -38,9 +41,9 @@ body.dark{
   --border:rgba(255,255,255,0.06);
 }
 
-/* -----------------------------------------------------
+/* ==========================================================
    LOGIN SCREEN
------------------------------------------------------ */
+========================================================== */
 #loginScreen{
   position:fixed; inset:0;
   background:var(--bg);
@@ -58,9 +61,7 @@ body.dark{
   transition:0.25s;
 }
 
-#loginBox.shake{
-  animation:shakeAnim 0.35s ease;
-}
+#loginBox.shake{ animation:shakeAnim 0.35s ease; }
 @keyframes shakeAnim{
   0%{transform:translateX(0);}
   25%{transform:translateX(-6px);}
@@ -68,6 +69,7 @@ body.dark{
   75%{transform:translateX(-6px);}
   100%{transform:translateX(0);}
 }
+
 #loginBox.errorBorder{
   border:1px solid #c62828;
   box-shadow:0 0 8px rgba(198,40,40,0.6);
@@ -115,9 +117,9 @@ body.dark{
   border:1px solid var(--border);background:var(--card);
 }
 
-/* -----------------------------------------------------
+/* ==========================================================
    DASHBOARD
------------------------------------------------------ */
+========================================================== */
 .header{
   display:flex;justify-content:space-between;align-items:center;
   max-width:1200px;margin:0 auto 12px;padding:14px;
@@ -159,6 +161,7 @@ body.dark{
   transform-origin:top;transform:scale(0.9);
 }
 .card:hover{transform:scale(0.94);}
+
 .card-title{
   display:flex;justify-content:space-between;align-items:center;
   gap:8px;margin-bottom:8px;font-weight:700;font-size:15px;
@@ -169,9 +172,9 @@ body.dark{
 .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
 .tiny{font-size:12px;opacity:0.7;}
 
-/* -----------------------------------------------------
+/* ==========================================================
    SESSION MODAL (ORTA EKRAN)
------------------------------------------------------ */
+========================================================== */
 #sessionModal {
   position: fixed;
   inset: 0;
@@ -253,7 +256,6 @@ body.dark{
 
 <!-- DASHBOARD -->
 <div id="dashboard" style="display:none;">
-
   <div class="header">
     <div class="title">
       <div>Akıllı DC Güç Ünitesi</div>
@@ -282,21 +284,26 @@ body.dark{
 /* ============================================================
    LOGIN + TOKEN
 ============================================================ */
+const loginScreen = document.getElementById("loginScreen");
 const loginBox = document.getElementById("loginBox");
+const dashboard = document.getElementById("dashboard");
 
 function saveToken(t){ localStorage.setItem("sessionToken", t); }
 function loadToken(){ return localStorage.getItem("sessionToken"); }
 function clearToken(){ localStorage.removeItem("sessionToken"); }
 
+/* ENTER ile login */
 loginBox.addEventListener("keydown", e=>{
   if(e.key==="Enter") handleLogin();
 });
 
+/* CAPS LOCK kontrolü */
 document.getElementById("password").addEventListener("keyup", e=>{
   document.getElementById("capsWarning").style.display =
     e.getModifierState("CapsLock") ? "block" : "none";
 });
 
+/* Şifre göster/gizle */
 document.getElementById("togglePass").onclick = ()=>{
   const p=document.getElementById("password");
   p.type = p.type==="password" ? "text" : "password";
@@ -319,6 +326,7 @@ async function handleLogin(){
 
   if(data.ok){
     loginBox.classList.add("success");
+
     setTimeout(()=>{
       saveToken(data.token);
       showDashboard();
@@ -355,28 +363,33 @@ async function logout(){
   if(token){
     await fetch("/api/logout",{ method:"POST", headers:{ "authorization":token } });
   }
+
   clearToken();
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("loginScreen").style.display="flex";
-  alert("Güç ünitesinden ayrılınıyor...");
+
+  dashboard.style.display="none";
+  loginScreen.style.display="flex";   // <-- HATA DÜZELTİLDİ
+  document.getElementById("loginError").innerText="";
+  document.getElementById("blockMsg").innerText="";
+  document.getElementById("username").value="";
+  document.getElementById("password").value="";
 }
 
-/* SHOW DASHBOARD */
+/* DASHBOARD AÇ */
 function showDashboard(){
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("dashboard").style.display="block";
+  loginScreen.style.display="none";
+  dashboard.style.display="block";
+  modalShown = false;
 }
 
-/* AUTO CHECK ON LOAD */
+/* SAYFA AÇILINCA TOKEN KONTROL */
 window.addEventListener("load", async()=>{
   if(await checkToken()) showDashboard();
   startSessionWatcher();
 });
 
 /* ============================================================
-   SESSION TIMEOUT SYSTEM (Modal Destekli)
+   SESSION TIMEOUT SYSTEM
 ============================================================ */
-
 let remaining = 0;
 let modalShown = false;
 
@@ -436,9 +449,8 @@ function startSessionWatcher(){
 }
 
 /* ============================================================
-   DASHBOARD CODE (Tamamen korunmuş)
+   DASHBOARD KODU
 ============================================================ */
-
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 const OFFLINE_THRESHOLD=10000;
 
@@ -446,7 +458,10 @@ let grid=document.getElementById("grid");
 let charts=[],lastReceived=[],lastGlobal=Date.now();
 
 /* Saat */
-setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
+setInterval(()=>{
+  document.getElementById("realtimeClock").innerText=
+    new Date().toLocaleTimeString();
+},1000);
 
 /* Tema */
 document.getElementById("themeToggle").onclick=()=>{
@@ -456,7 +471,7 @@ document.getElementById("themeToggle").onclick=()=>{
     document.body.classList.contains("dark")?"☀️":"🌙";
 };
 
-/* Kartlar */
+/* Kart oluşturma */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
   const html=`<div class="card" id="${id}">
@@ -505,7 +520,7 @@ for(let i=0;i<MON_NAMES.length;i++){
 function flash(el,type){
   el.classList.remove("flash-up","flash-down");
   void el.offsetWidth;
-  el.classList.add(type==="up"?"flash-up":"down");
+  el.classList.add(type==="up"?"flash-up":"flash-down");
   setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
 }
 
@@ -516,7 +531,6 @@ const socket=new WebSocket(WS_URL);
 
 let lastTs=0;
 
-/* Veri geldiğinde dashboard güncelle */
 socket.addEventListener("message",(e)=>{
   const msg=JSON.parse(e.data);
 
@@ -524,7 +538,8 @@ socket.addEventListener("message",(e)=>{
     lastTs=msg.ts;
     document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
     processData(msg.data||{});
-  } else if(msg.type==="offline"){
+  } 
+  else if(msg.type==="offline"){
     makeAllOffline();
   }
 });
@@ -575,7 +590,8 @@ function processData(obj){
     if(a<0.005 || w<0.05){
       statEl.innerText="Enerji yok ⚠️";
       dotEl.style.background="#ff9800";
-    } else {
+    } 
+    else {
       statEl.innerText="Bağlantı: Aktif";
       dotEl.style.background="#0f0";
       anyActive=true;
@@ -605,7 +621,7 @@ function processData(obj){
   else globalEl.innerText="Bağlantı kontrol ediliyor...";
 }
 
-/* Offline durumunda kartları sıfırla */
+/* Offline durumda kartları sıfırla */
 function makeAllOffline(){
   MON_NAMES.forEach((m,i)=>{
     document.getElementById("v"+i).innerText="-";
