@@ -5,6 +5,7 @@ import { WebSocketServer } from "ws";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,19 +16,89 @@ const wss = new WebSocketServer({ server });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // HTML burada olmalı: /public/index.html
+app.use(express.static(path.join(__dirname, "public"))); // HTML burada olacak
 
+// =====================================================
+//  AYAR SİSTEMİ (Kalıcı settings.json)
+// =====================================================
+const SETTINGS_FILE = path.join(__dirname, "settings.json");
+
+// Varsayılan ayarlar (dosya yoksa otomatik oluşur)
+const defaultSettings = {
+  theme: "dark",
+  unitMode: "A_W", // A/W ya da mA/mW
+  monitorNames: [
+    "DC Soket Çıkışı 1",
+    "DC Soket Çıkışı 2",
+    "USB-A Portu 1",
+    "USB-A Portu 2"
+  ],
+  updateDelayWarn: true
+};
+
+// Ayar dosyasını yükle veya oluştur
+function loadSettings() {
+  try {
+    if (!fs.existsSync(SETTINGS_FILE)) {
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(defaultSettings, null, 2));
+      return defaultSettings;
+    }
+
+    const data = fs.readFileSync(SETTINGS_FILE, "utf8");
+    return JSON.parse(data);
+
+  } catch (err) {
+    console.error("Ayar yüklenemedi, varsayılanlar kullanıldı:", err);
+    return defaultSettings;
+  }
+}
+
+// Ayarları dosyaya kaydet
+function saveSettings(newSettings) {
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(newSettings, null, 2));
+}
+
+let settings = loadSettings();
+
+// Settings GET
+app.get("/api/settings/get", (req, res) => {
+  return res.json(settings);
+});
+
+// Settings SET
+app.post("/api/settings/set", (req, res) => {
+  const payload = req.body;
+  settings = { ...settings, ...payload }; // Gelen değerleri üzerine yaz
+  saveSettings(settings);
+
+  // Tüm WebSocket istemcilere ayar güncelleme yayını
+  const msg = JSON.stringify({ type: "settings", settings });
+  wss.clients.forEach(client => {
+    if (client.readyState === 1) client.send(msg);
+  });
+
+  return res.json({ status: "saved", settings });
+});
+
+// =====================================================
+//  CANLI VERİ SİSTEMİ
+// =====================================================
 let lastData = {};
 let lastTimestamp = 0;
 
-// ESP'den gelen POST verisi
+// ESP8266 → POST JSON
 app.post("/api/data", (req, res) => {
   const payload = req.body || {};
   lastData = payload;
   lastTimestamp = Date.now();
 
-  // Tüm WebSocket istemcilerine gönder
-  const msg = JSON.stringify({ type: "update", data: lastData, ts: lastTimestamp });
+  // WebSocket üzerinden frontend'e gönder
+  const msg = JSON.stringify({
+    type: "update",
+    data: lastData,
+    ts: lastTimestamp
+  });
+
   wss.clients.forEach(client => {
     if (client.readyState === 1) client.send(msg);
   });
@@ -35,18 +106,30 @@ app.post("/api/data", (req, res) => {
   return res.status(200).json({ status: "ok" });
 });
 
-// İstemcilerin son veriyi çekmesi
-app.get("/api/last", (req, res) => res.json({ data: lastData, ts: lastTimestamp }));
-
-// Yeni WebSocket bağlantısı
-wss.on("connection", (ws) => {
-  ws.send(JSON.stringify({ type: "init", data: lastData, ts: lastTimestamp }));
+// Son veri isteyen istemciler için
+app.get("/api/last", (req, res) => {
+  return res.json({ data: lastData, ts: lastTimestamp });
 });
 
-// 10 saniyeden uzun süredir veri gelmezse offline bildirimi
+// WebSocket bağlantısı
+wss.on("connection", (ws) => {
+  // İlk bağlanana hem veri hem ayarlar gönderiyoruz
+  ws.send(JSON.stringify({
+    type: "init",
+    data: lastData,
+    ts: lastTimestamp,
+    settings
+  }));
+});
+
+// 10 saniyeden uzun süre veri gelmezse offline bildir
 setInterval(() => {
   if (Date.now() - lastTimestamp > 10000) {
-    const msg = JSON.stringify({ type: "offline", data: null, ts: lastTimestamp });
+    const msg = JSON.stringify({
+      type: "offline",
+      ts: lastTimestamp
+    });
+
     wss.clients.forEach(client => {
       if (client.readyState === 1) client.send(msg);
     });
