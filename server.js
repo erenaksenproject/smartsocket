@@ -45,7 +45,7 @@ function saveTrusted(hash) {
 const VALID_USER = "smartsocket";
 const VALID_PASS = "panelpassword81";
 
-let activeTokens = []; 
+let activeTokens = [];
 // { token, createdAt, userAgent, ip, isTrusted }
 
 const TOKEN_LIFETIME = 60 * 60 * 1000; // 1 saat
@@ -75,18 +75,13 @@ function pruneTokenLimit() {
   }
 }
 
-// Cihaz hash hesaplama (User-Agent + IP)
+// Cihaz hash hesaplama (SADECE User-Agent => IP DEĞİŞSE DE AYNI CİHAZ)
 function getDeviceHash(req) {
   const ua = req.headers["user-agent"] || "unknown";
-  const ipHeader = req.headers["x-forwarded-for"];
-  const ip =
-    (ipHeader && ipHeader.split(",")[0].trim()) ||
-    req.socket.remoteAddress ||
-    "unknown";
 
   return crypto
     .createHash("sha256")
-    .update(ua + "::" + ip)
+    .update(ua)
     .digest("hex");
 }
 
@@ -136,11 +131,17 @@ app.post("/api/login", (req, res) => {
   // Token oluştur
   const token = crypto.randomBytes(24).toString("hex");
 
+  const ipHeader = req.headers["x-forwarded-for"];
+  const ip =
+    (ipHeader && ipHeader.split(",")[0].trim()) ||
+    req.socket.remoteAddress ||
+    "unknown";
+
   activeTokens.push({
     token,
     createdAt: now,
     userAgent: req.headers["user-agent"] || "unknown",
-    ip: req.socket.remoteAddress || "unknown",
+    ip,
     isTrusted,
   });
 
