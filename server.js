@@ -21,22 +21,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // =============================================================
-// YETKİLİ CİHAZ ("TRUSTED DEVICE") DOSYASI
+// SABİT YETKİLİ CİHAZ HASH (BURAYI SENİN PC'NİN HASH'İYLE SABİTLEDİK)
 // =============================================================
-const trustedFile = path.join(__dirname, "trustedDevice.json");
-
-// Eğer yoksa oluştur
-if (!fs.existsSync(trustedFile)) {
-  fs.writeFileSync(trustedFile, JSON.stringify({ deviceHash: null }, null, 2));
-}
-
-function loadTrusted() {
-  return JSON.parse(fs.readFileSync(trustedFile, "utf8"));
-}
-
-function saveTrusted(hash) {
-  fs.writeFileSync(trustedFile, JSON.stringify({ deviceHash: hash }, null, 2));
-}
+const FIXED_TRUSTED_HASH =
+  "62d18984722ed057781bce4342a009271fd0bf4799981a048ca348f09af03584";
 
 // =============================================================
 // LOGIN SİSTEMİ
@@ -75,14 +63,11 @@ function pruneTokenLimit() {
   }
 }
 
-// Cihaz hash hesaplama (SADECE User-Agent => IP DEĞİŞSE DE AYNI CİHAZ)
+// Cihaz hash hesaplama (SADECE User-Agent — IP değişse bile aynı kalır)
 function getDeviceHash(req) {
   const ua = req.headers["user-agent"] || "unknown";
 
-  return crypto
-    .createHash("sha256")
-    .update(ua)
-    .digest("hex");
+  return crypto.createHash("sha256").update(ua).digest("hex");
 }
 
 // =============================================================
@@ -115,19 +100,9 @@ app.post("/api/login", (req, res) => {
 
   const deviceHash = getDeviceHash(req);
   console.log("DEVICE HASH:", deviceHash);
-  const trusted = loadTrusted();
 
-  let isTrusted = false;
-
-  if (!trusted.deviceHash) {
-    // İlk kez giriş → Bu cihaz YETKİLİ olur
-    saveTrusted(deviceHash);
-    isTrusted = true;
-    console.log(">>> Bu cihaz YETKİLİ olarak kaydedildi.");
-  } else if (trusted.deviceHash === deviceHash) {
-    // Zaten yetkili cihaz
-    isTrusted = true;
-  }
+  // SABİT YETKİLİ HASH KONTROLÜ
+  const isTrusted = deviceHash === FIXED_TRUSTED_HASH;
 
   // Token oluştur
   const token = crypto.randomBytes(24).toString("hex");
@@ -195,7 +170,7 @@ app.get("/api/session-info", (req, res) => {
 });
 
 // =============================================================
-// OTURUM SÜRESİ UZATMA → SADECE NORMAL CİHAZ
+// OTURUM SÜRESİ UZATMA
 // =============================================================
 app.post("/api/extend-session", (req, res) => {
   cleanupExpiredTokens();
@@ -204,7 +179,7 @@ app.post("/api/extend-session", (req, res) => {
   const tk = activeTokens.find((t) => t.token === token);
 
   if (!tk) return res.json({ ok: false });
-  if (tk.isTrusted) return res.json({ ok: false }); // YETKİLİ cihazın süresi uzamaz, zaten sınırsız
+  if (tk.isTrusted) return res.json({ ok: false });
 
   tk.createdAt = Date.now();
   return res.json({ ok: true });
