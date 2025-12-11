@@ -1,227 +1,538 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Akıllı DC Güç Ünitesi</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:14px;--bg:#eef2f6;--text:#111;--card:rgba(255,255,255,0.6);--border:rgba(255,255,255,0.5);}
-  body.dark{--bg:#0b0c0e;--text:#eee;--card:rgba(20,20,20,0.48);--border:rgba(255,255,255,0.06);}
-  body{background:var(--bg);color:var(--text);}
-  .header{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto 12px;}
-  .title{display:flex;flex-direction:column;font-weight:700;}
-  .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
-  .right-controls{display:flex;align-items:center;gap:12px;}
-  .clock{font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border);}
-  .lastData{font-size:12px;opacity:0.85;margin-top:6px;}
-  .themeToggle{padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:14px;}
-  .summary{max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
-  .sum-card{background:var(--card);border:1px solid var(--border);padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;}
-  .sum-label{font-size:12px;opacity:0.75;}
-  .sum-val{font-size:18px;font-weight:700;margin-top:6px;}
-  .grid{max-width:1200px;margin:14px auto;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 6px;}
-  @media(max-width:800px){.grid{grid-template-columns:1fr;}}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);transform-origin:top;transform:scale(0.9);}
-  .card:hover{transform:scale(0.94);}
-  .card-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:15px;}
-  .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
-  .values-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
-  .val-box{text-align:center;flex:1;}
-  .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .val-label{font-size:12px;opacity:0.75;margin-top:4px;}
-  .tiny{font-size:12px;opacity:0.7;}
-  .flash-up{animation: flashGreen 420ms ease;} .flash-down{animation: flashRed 420ms ease;}
+  :root{
+    --bg:#eef2f6; --text:#111; --card: rgba(255,255,255,0.6); --border: rgba(255,255,255,0.5);
+    --glass-blur: 10px;
+  }
+  body.dark{
+    --bg:#0b0c0e; --text:#eee; --card: rgba(20,20,20,0.48); --border: rgba(255,255,255,0.06);
+  }
+  body{margin:0;font-family:Inter, 'Segoe UI', Arial;background:var(--bg);color:var(--text);padding:14px;-webkit-font-smoothing:antialiased;}
+
+  /* Header */
+  .header{max-width:1200px;margin:0 auto 12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .title{display:flex;flex-direction:column;}
+  .title h1{margin:0;font-size:20px}
+  .subtitle{font-size:12px;opacity:0.8;margin-top:4px}
+  .right-controls{display:flex;align-items:center;gap:12px}
+  .clock{font-weight:600;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border)}
+  .themeToggle{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer}
+
+  /* Settings Button */
+  .settingsBtn{padding:8px 12px;border-radius:10px;background:linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid var(--border); cursor:pointer;backdrop-filter: blur(var(--glass-blur));}
+
+  /* Summary */
+  .summary{max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .sum-card{min-width:120px;padding:12px 16px;border-radius:12px;background:var(--card);border:1px solid var(--border);text-align:center}
+  .sum-label{font-size:12px;opacity:0.8}
+  .sum-val{font-weight:700;font-size:18px;margin-top:6px}
+
+  /* Grid & cards */
+  .grid{max-width:1200px;margin:14px auto;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 6px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,0.06);backdrop-filter: blur(var(--glass-blur))}
+  .card-title{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:8px}
+  .status-dot{width:12px;height:12px;border-radius:50%}
+  .values-row{display:flex;gap:10px;justify-content:space-between;margin-bottom:8px}
+  .val-box{flex:1;text-align:center}
+  .val-num{font-weight:800;font-size:16px}
+  .val-label{font-size:12px;opacity:0.75;margin-top:4px}
+  .tiny{font-size:12px;opacity:0.7}
+
+  /* flash */
+  .flash-up{animation: flashGreen 420ms ease}
+  .flash-down{animation: flashRed 420ms ease}
   @keyframes flashGreen{0%{color:#00e676;text-shadow:0 0 8px #00e676}100%{color:inherit;text-shadow:none}}
   @keyframes flashRed{0%{color:#ff3b30;text-shadow:0 0 8px #ff3b30}100%{color:inherit;text-shadow:none}}
-  .status-text{font-size:13px;margin-top:6px;}
-  .ic{width:16px;height:16px;display:inline-block;margin-right:6px;}
+
+  /* Modal (glassmorphism) */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.25);display:none;align-items:center;justify-content:center;z-index:60}
+  .modal{width:min(720px,95%);border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.12);backdrop-filter: blur(var(--glass-blur));box-shadow:0 12px 40px rgba(0,0,0,0.25)}
+  .modal h3{margin:0 0 12px 0}
+  .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .form-row label{font-size:13px;min-width:140px;align-self:center}
+  .input, .select{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);min-width:180px}
+  .full{flex:1}
+  .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+  .btn.save{background:#0b84ff;color:white}
+  .btn.cancel{background:transparent;border:1px solid var(--border)}
+
+  /* small */
+  .muted{font-size:12px;opacity:0.7}
+
 </style>
 </head>
 <body>
+
 <div class="header">
   <div class="title">
-    <div>Akıllı DC Güç Ünitesi</div>
+    <h1>Akıllı DC Güç Ünitesi</h1>
     <div class="subtitle" id="globalStatusText">Bağlantı kontrol ediliyor...</div>
   </div>
+
   <div class="right-controls">
     <div class="clock" id="realtimeClock">--:--:--</div>
-    <button class="themeToggle" id="themeToggle">🌙</button>
-    <div style="display:flex;flex-direction:column;align-items:center;">
-      <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
-    </div>
+
+    <button class="settingsBtn" id="openSettings">⚙️ Ayarlar</button>
   </div>
 </div>
 
 <div class="summary">
-  <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.0 V</div></div>
-  <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.00 A</div></div>
-  <div class="sum-card"><div class="sum-label">Toplam Güç</div><div class="sum-val" id="sumW">0.0 W</div></div>
+  <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.00 V</div></div>
+  <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.000 A</div></div>
+  <div class="sum-card"><div class="sum-label">Toplam Güç</div><div class="sum-val" id="sumW">0.00 W</div></div>
 </div>
 
 <div class="grid" id="grid"></div>
 
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">Ayarlar</h3>
+
+    <div class="form-row">
+      <label>Görünüm</label>
+      <select id="inpTheme" class="select">
+        <option value="light">Aydınlık</option>
+        <option value="dark">Karanlık</option>
+      </select>
+      <div class="muted">Sayfa görünümü</div>
+    </div>
+
+    <div class="form-row">
+      <label>Monitör Adları</label>
+      <div class="full">
+        <input id="m0" class="input" placeholder="Monitör 1 adı" />
+        <input id="m1" class="input" placeholder="Monitör 2 adı" style="margin-top:8px"/>
+        <input id="m2" class="input" placeholder="Monitör 3 adı" style="margin-top:8px"/>
+        <input id="m3" class="input" placeholder="Monitör 4 adı" style="margin-top:8px"/>
+        <div class="muted" style="margin-top:6px">Monitör isimleri tüm kullanıcılara uygulanır.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Birim Modu</label>
+      <select id="inpUnits" class="select">
+        <option value="A_W">A / W</option>
+        <option value="mA_mW">mA / mW</option>
+      </select>
+      <div class="muted">Gösterim birimini belirler (grafikler ve toplam değerler dahil).</div>
+    </div>
+
+    <div class="form-row">
+      <label>Güncelleme Gecikme Uyarısı</label>
+      <select id="inpDelayWarn" class="select">
+        <option value="true">Açık</option>
+        <option value="false">Kapalı</option>
+      </select>
+      <div class="muted">Veri gecikmesi durumunda uyarı metinleri gösterilsin mi?</div>
+    </div>
+
+    <div class="btns">
+      <button class="btn cancel" id="cancelSettings">İptal</button>
+      <button class="btn save" id="saveSettings">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
-const OFFLINE_THRESHOLD=10000;
-let grid=document.getElementById("grid");
-let charts=[],lastReceived=[],lastGlobal=Date.now();
+/* ------------------------
+   CONFIG & STATE
+   ------------------------ */
+let SETTINGS = null;
+let MON_NAMES = [];
+const OFFLINE_THRESHOLD = 10000;
 
-/* Clock */
-setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
+let charts = [];
+let lastReceived = [];
+let lastTs = 0;
 
-/* Theme toggle */
-document.getElementById("themeToggle").onclick=()=>{
-  document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText=document.body.classList.contains("dark")?"☀️":"🌙";
-};
+/* realtime clock */
+setInterval(()=>document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString(),1000);
 
-/* Build monitors */
-for(let i=0;i<MON_NAMES.length;i++){
-  const id="mon"+i;
-  const html=`<div class="card" id="${id}">
-    <div class="card-title">
-      <strong>${MON_NAMES[i]}</strong>
-      <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
-    </div>
-    <div class="values-row">
-      <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
-      <div class="tiny status-text" id="stat${i}">Durum: —</div>
-    </div>
-    <canvas id="chart${i}" height="110"></canvas>
-  </div>`;
-  const div=document.createElement("div"); div.innerHTML=html; grid.appendChild(div.firstElementChild); lastReceived[i]=0;
+/* ------------------------
+   SETTINGS: get & set
+   ------------------------ */
+async function fetchSettings(){
+  try {
+    const res = await fetch("/api/settings/get");
+    const json = await res.json();
+    // server.js returns settings object directly
+    SETTINGS = (json && typeof json === 'object' && json.theme===undefined) ? json : (json.settings || json);
+    // compatibility: server may return either raw or wrapped
+    // ensure default keys
+    SETTINGS = SETTINGS || {};
+    if(!SETTINGS.monitorNames) SETTINGS.monitorNames = ["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
+    if(!SETTINGS.unitMode) SETTINGS.unitMode = SETTINGS.unitMode || SETTINGS.unitMode || "A_W";
+    if(!SETTINGS.theme) SETTINGS.theme = SETTINGS.theme || "dark";
+    if(typeof SETTINGS.updateDelayWarn === "undefined") SETTINGS.updateDelayWarn = true;
+
+    applySettingsToUI();
+  } catch(err){
+    console.error("Ayarlar yüklenemedi", err);
+    // fallback defaults
+    SETTINGS = { theme:"dark", monitorNames:["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"], unitMode:"A_W", updateDelayWarn:true };
+    applySettingsToUI();
+  }
 }
 
-/* Charts setup */
-for(let i=0;i<MON_NAMES.length;i++){
-  const ctx=document.getElementById("chart"+i).getContext("2d");
-  charts[i]=new Chart(ctx,{type:'line',data:{labels:[],datasets:[
-    {label:'Volt (V)', data:[], borderColor:'#1E90FF', backgroundColor:'rgba(30,144,255,0.06)', tension:0.25, pointRadius:0},
-    {label:'Akım (A)', data:[], borderColor:'#FF3B30', backgroundColor:'rgba(255,59,48,0.06)', tension:0.25, pointRadius:0},
-    {label:'Güç (W)', data:[], borderColor:'#00C853', backgroundColor:'rgba(0,200,83,0.06)', tension:0.25, pointRadius:0}
-  ]}, options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}});
+async function saveSettingsToServer(newObj){
+  const payload = { ...SETTINGS, ...newObj };
+  try {
+    const res = await fetch("/api/settings/set", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const j = await res.json();
+    // server returns saved settings in j.settings or j.settings
+    SETTINGS = j.settings || j.settings || payload;
+    // notify UI
+    applySettingsToUI();
+    // send local notification? (simple)
+    alert("Ayarlar kaydedildi.");
+  } catch(err){
+    console.error("Ayar kaydedilemedi", err);
+    alert("Ayarlar kaydedilemedi, tekrar dene.");
+  }
 }
 
-/* Helpers */
-function fmtTs(ts){if(!ts) return "—"; const d=new Date(ts); return d.toLocaleDateString()+" "+d.toLocaleTimeString();}
-function flash(el,type){el.classList.remove("flash-up","flash-down"); void el.offsetWidth; el.classList.add(type==="up"?"flash-up":"flash-down"); setTimeout(()=>{el.classList.remove("flash-up","flash-down");},400);}
+/* Apply settings to UI (theme, monitor names, unit mode, inputs) */
+function applySettingsToUI(){
+  // theme
+  if(SETTINGS.theme === "dark") document.body.classList.add("dark");
+  else document.body.classList.remove("dark");
 
-/* WebSocket */
-const protocol=(location.protocol==="https:")?"wss:":"ws:";
-const WS_URL=protocol+"//"+location.host;
-const socket=new WebSocket(WS_URL);
+  // monitor names
+  MON_NAMES = SETTINGS.monitorNames || ["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 
-let lastTs=0;
+  // build monitors (if not created yet or change names)
+  if(!document.getElementById("grid").hasChildNodes()){
+    buildMonitorCards();
+    setupCharts();
+  } else {
+    // update titles
+    for(let i=0;i<MON_NAMES.length;i++){
+      const titleEl = document.querySelector("#mon"+i+" strong");
+      if(titleEl) titleEl.innerText = MON_NAMES[i];
+    }
+  }
 
-socket.addEventListener("message",(e)=>{
-  try{
-    const msg=JSON.parse(e.data);
-    if(msg.type==="init"||msg.type==="update"){
-      lastTs=msg.ts||Date.now();
-      document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
-      processData(msg.data||{});
-    } else if(msg.type==="offline"){ makeAllOffline(); }
-  }catch(err){console.error(err);}
+  // inputs
+  document.getElementById("inpTheme").value = SETTINGS.theme || "dark";
+  document.getElementById("inpUnits").value = SETTINGS.unitMode || (SETTINGS.unitMode === undefined ? "A_W" : SETTINGS.unitMode);
+  document.getElementById("inpDelayWarn").value = (SETTINGS.updateDelayWarn === false) ? "false" : "true";
+  // monitor name inputs
+  for(let i=0;i<4;i++){
+    const el = document.getElementById("m"+i);
+    if(el) el.value = MON_NAMES[i] || "";
+  }
+}
+
+/* ------------------------
+   Build UI cards & charts
+   ------------------------ */
+function buildMonitorCards(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  lastReceived = [];
+
+  for(let i=0;i<4;i++){
+    const id = "mon"+i;
+    const html = `<div class="card" id="${id}">
+      <div class="card-title"><strong>${MON_NAMES[i]||("Monitör "+(i+1))}</strong><div id="dot${i}" class="status-dot" style="background:#f44"></div></div>
+      <div class="values-row">
+        <div class="val-box"><div class="val-num"><span id="v${i}">--</span></div><div class="val-label">Volt</div></div>
+        <div class="val-box"><div class="val-num"><span id="a${i}">--</span></div><div class="val-label">Akım</div></div>
+        <div class="val-box"><div class="val-num"><span id="w${i}">--</span></div><div class="val-label">Güç</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
+        <div class="tiny status-text" id="stat${i}">Durum: —</div>
+      </div>
+      <canvas id="chart${i}" height="110"></canvas>
+    </div>`;
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    grid.appendChild(container.firstElementChild);
+    lastReceived[i] = 0;
+  }
+}
+
+function setupCharts(){
+  charts = [];
+  for(let i=0;i<4;i++){
+    const ctx = document.getElementById("chart"+i).getContext("2d");
+    charts[i] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Volt', data: [], borderColor: '#1E90FF', tension:0.25, fill:false },
+          { label: 'Akım', data: [], borderColor: '#FF3B30', tension:0.25, fill:false },
+          { label: 'Güç',  data: [], borderColor: '#00C853', tension:0.25, fill:false }
+        ]
+      },
+      options: {
+        animation:false,
+        plugins:{ legend:{ display:true } },
+        scales:{ x:{ display:false } }
+      }
+    });
+  }
+}
+
+/* Convert value according to unit mode (for display & charts) */
+function displayValueForUnit(type, rawValue){
+  // type: 'v' voltage (V) ; 'a' current (A) ; 'w' power (W)
+  const unitMode = SETTINGS?.unitMode || "A_W";
+  if(type === 'v') return rawValue; // voltage always V
+  if(unitMode === 'mA_mW'){
+    return rawValue * 1000; // A->mA , W->mW
+  } else {
+    return rawValue; // A or W
+  }
+}
+
+function unitLabel(type){
+  const unitMode = SETTINGS?.unitMode || "A_W";
+  if(type === 'v') return "V";
+  if(type === 'a') return (unitMode === 'mA_mW') ? "mA" : "A";
+  if(type === 'w') return (unitMode === 'mA_mW') ? "mW" : "W";
+}
+
+/* ------------------------
+   WebSocket + data handling
+   ------------------------ */
+const protocol = (location.protocol === "https:") ? "wss:" : "ws:";
+const WS_URL = protocol + "//" + location.host;
+const socket = new WebSocket(WS_URL);
+
+socket.addEventListener("open", ()=>{ console.log("WS connected"); });
+socket.addEventListener("close", ()=>{ console.log("WS closed"); });
+
+socket.addEventListener("message", (e) => {
+  try {
+    const msg = JSON.parse(e.data);
+    if(msg.type === "init"){
+      // init may contain settings + data
+      if(msg.settings) {
+        SETTINGS = msg.settings;
+        applySettingsToUI();
+      } else {
+        // if server returns settings via GET only, we already fetched them
+      }
+      if(msg.data) {
+        lastTs = msg.ts || Date.now();
+        document.getElementById("lastDataTs").innerText = "Son veri: " + fmtTs(lastTs);
+        processData(msg.data);
+      }
+    } else if(msg.type === "update"){
+      lastTs = msg.ts || Date.now();
+      document.getElementById("lastDataTs").innerText = "Son veri: " + fmtTs(lastTs);
+      processData(msg.data || {});
+    } else if(msg.type === "offline"){
+      makeAllOffline();
+    } else if(msg.type === "settings"){
+      // server pushed new settings
+      SETTINGS = msg.settings;
+      applySettingsToUI();
+    }
+  } catch(err){ console.error(err); }
 });
 
-/* Process data */
-function processData(obj){
-  let totalV=0,totalA=0,totalW=0;
-  let anyActive=false;
+/* Process incoming telemetry (object shaped monitor1..4) */
+function processData(rootData){
+  let totalV = 0, totalA = 0, totalW = 0;
+  let anyActive = false;
 
-  for(let i=0;i<MON_NAMES.length;i++){
-    const d=obj["monitor"+(i+1)]?.hat1 || null;
-    const vEl=document.getElementById("v"+i),
-          aEl=document.getElementById("a"+i),
-          wEl=document.getElementById("w"+i),
-          tEl=document.getElementById("t"+i);
-    const statEl=document.getElementById("stat"+i),
-          dotEl=document.getElementById("dot"+i);
-    const ch=charts[i];
+  for(let i=0;i<4;i++){
+    const hat = rootData["monitor"+(i+1)]?.hat1 || null;
+    const vE = document.getElementById("v"+i);
+    const aE = document.getElementById("a"+i);
+    const wE = document.getElementById("w"+i);
+    const tE = document.getElementById("t"+i);
+    const statE = document.getElementById("stat"+i);
+    const dotE = document.getElementById("dot"+i);
+    const ch = charts[i];
 
-    if(!d){
-      vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-";
-      statEl.innerText="Bağlantı yok — kontrol edilmeli"; 
-      dotEl.style.background="#f33";
+    if(!hat){
+      vE.innerText = aE.innerText = wE.innerText = tE.innerText = "-";
+      statE.innerText = "Bağlantı yok — kontrol edilmeli";
+      dotE.style.background = "#f33";
       continue;
     }
 
-    const oldV=parseFloat(vEl.innerText)||0;
-    const oldA=parseFloat(aEl.innerText)||0;
-    const oldW=parseFloat(wEl.innerText)||0;
+    let rawV = hat.voltage?.value ?? 0;
+    let rawA = hat.current?.value ?? 0;
+    let rawW = hat.power?.value ?? 0;
 
-    const v=d.voltage?.value||0;
-    const a=d.current?.value||0;
-    const w=d.power?.value||0;
+    // energy detection thresholds come from server (not implemented in settings), fallback to defaults
+    const noEnergyA = typeof (SETTINGS?.noEnergyCurrentThreshold) !== 'undefined' ? SETTINGS.noEnergyCurrentThreshold : 0.005;
+    const noEnergyW = typeof (SETTINGS?.noEnergyPowerThreshold) !== 'undefined' ? SETTINGS.noEnergyPowerThreshold : 0.05;
 
-    vEl.innerText=v.toFixed(2);
-    aEl.innerText=a.toFixed(3);
-    wEl.innerText=w.toFixed(2);
-    tEl.innerText=d.temperature?.value?.toFixed(1)||"-";
+    // convert for display / chart according to unit mode
+    const dispV = displayValueForUnit('v', rawV);
+    const dispA = displayValueForUnit('a', rawA);
+    const dispW = displayValueForUnit('w', rawW);
 
-    flash(vEl, v>oldV?"up":"down");
-    flash(aEl, a>oldA?"up":"down");
-    flash(wEl, w>oldW?"up":"down");
+    // old values for flash
+    const oldV = parseFloat(vE.innerText) || 0;
+    const oldA = parseFloat(aE.innerText) || 0;
+    const oldW = parseFloat(wE.innerText) || 0;
 
-    /* --- Enerji Yok Eşik Kontrolü (Senin istediğin) --- */
-    if(a < 0.005 || w < 0.05){
-      statEl.innerText="Enerji yok⚠️";
-      dotEl.style.background="#ff9800";
+    // set text with proper decimals based on unit
+    vE.innerText = dispV.toFixed(2) + " " + unitLabel('v');
+    aE.innerText = (Math.abs(dispA) < 0.0005 ? "0.000" : (SETTINGS?.unitMode === 'mA_mW' ? dispA.toFixed(1) : dispA.toFixed(3))) + " " + unitLabel('a');
+    wE.innerText = (SETTINGS?.unitMode === 'mA_mW' ? dispW.toFixed(1) : dispW.toFixed(2)) + " " + unitLabel('w');
+    tE.innerText = (typeof hat.temperature?.value === 'number') ? hat.temperature.value.toFixed(1) : "-";
+
+    // flash effects
+    flashIfChanged(vE, dispV, oldV);
+    flashIfChanged(aE, dispA, oldA);
+    flashIfChanged(wE, dispW, oldW);
+
+    // energy/no-energy logic (use raw thresholds in A and W)
+    if(rawA < noEnergyA || rawW < noEnergyW){
+      statE.innerText = "Enerji yok ⚠️";
+      dotE.style.background = "#ff9800";
     } else {
-      statEl.innerText="Bağlantı: Aktif";
-      dotEl.style.background="#0f0";
-      anyActive=true;
+      statE.innerText = "Bağlantı: Aktif";
+      dotE.style.background = "#0f0";
+      anyActive = true;
     }
 
-    /* Chart update */
-    if(ch.data.labels.length>=30){
+    // chart push: push displayed values so graph matches labels/units
+    if(ch.data.labels.length >= 30){
       ch.data.labels.shift();
-      ch.data.datasets.forEach(ds=>ds.data.shift());
+      ch.data.datasets.forEach(ds => ds.data.shift());
     }
     ch.data.labels.push("");
-    ch.data.datasets[0].data.push(v);
-    ch.data.datasets[1].data.push(a);
-    ch.data.datasets[2].data.push(w);
-    ch.update("none");
+    ch.data.datasets[0].data.push(dispV);
+    ch.data.datasets[1].data.push(dispA);
+    ch.data.datasets[2].data.push(dispW);
+    ch.update('none');
 
-    totalV+=v; totalA+=a; totalW+=w;
-    lastReceived[i]=Date.now();
+    // accumulate totals (use displayed units)
+    totalV += dispV;
+    totalA += dispA;
+    totalW += dispW;
+
+    lastReceived[i] = Date.now();
   }
 
-  document.getElementById("sumV").innerText=totalV.toFixed(2)+" V";
-  document.getElementById("sumA").innerText=totalA.toFixed(3)+" A";
-  document.getElementById("sumW").innerText=totalW.toFixed(2)+" W";
+  // show totals with unit labels
+  document.getElementById("sumV").innerText = totalV.toFixed(2) + " " + unitLabel('v');
+  // format totals nicely
+  document.getElementById("sumA").innerText = (SETTINGS?.unitMode === 'mA_mW' ? totalA.toFixed(1) : totalA.toFixed(3)) + " " + unitLabel('a');
+  document.getElementById("sumW").innerText = (SETTINGS?.unitMode === 'mA_mW' ? totalW.toFixed(1) : totalW.toFixed(2)) + " " + unitLabel('w');
 
-  const globalEl=document.getElementById("globalStatusText");
-
-  if(anyActive) globalEl.innerText="Bağlantı başarılı";
-  else if(Date.now()-lastTs>OFFLINE_THRESHOLD) globalEl.innerText="Sistem ile iletişim yok";
-  else globalEl.innerText="Bağlantı kontrol ediliyor...";
+  const globalEl = document.getElementById("globalStatusText");
+  if(anyActive) globalEl.innerText = "Bağlantı başarılı";
+  else if(Date.now() - lastTs > OFFLINE_THRESHOLD) globalEl.innerText = "Sistem ile iletişim yok";
+  else globalEl.innerText = "Bağlantı kontrol ediliyor...";
 }
 
+/* flash helper */
+function flashIfChanged(el, newVal, oldVal){
+  // el contains value + unit, we only compare numbers
+  if(isNaN(newVal) || isNaN(oldVal)) return;
+  if(newVal > oldVal) { el.classList.add('flash-up'); setTimeout(()=>el.classList.remove('flash-up'),420); }
+  else if(newVal < oldVal){ el.classList.add('flash-down'); setTimeout(()=>el.classList.remove('flash-down'),420); }
+}
+
+/* offline handler */
 function makeAllOffline(){
-  MON_NAMES.forEach((m,i)=>{
-    document.getElementById("v"+i).innerText="-";
-    document.getElementById("a"+i).innerText="-";
-    document.getElementById("w"+i).innerText="-";
-    document.getElementById("t"+i).innerText="-";
-    document.getElementById("stat"+i).innerText="Sistem ile iletişim yok";
-    document.getElementById("dot"+i).style.background="red";
-  });
-  document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
+  for(let i=0;i<4;i++){
+    document.getElementById("v"+i).innerText = "-";
+    document.getElementById("a"+i).innerText = "-";
+    document.getElementById("w"+i).innerText = "-";
+    document.getElementById("t"+i).innerText = "-";
+    document.getElementById("stat"+i).innerText = "Sistem ile iletişim yok";
+    document.getElementById("dot"+i).style.background = "#f33";
+  }
+  document.getElementById("globalStatusText").innerText = "Sistem ile iletişim yok";
 }
 
-setInterval(()=>{
-  if(Date.now()-lastTs>OFFLINE_THRESHOLD){
-    makeAllOffline();
-  }
-},1000);
+/* ------------------------
+   helper / init
+   ------------------------ */
+function fmtTs(ts){ if(!ts) return "—"; const d = new Date(ts); return d.toLocaleDateString() + " " + d.toLocaleTimeString(); }
+
+/* ------------------------
+   Modal logic (open/cancel/save)
+   ------------------------ */
+const openSettingsBtn = document.getElementById("openSettings");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const saveBtn = document.getElementById("saveSettings");
+const cancelBtn = document.getElementById("cancelSettings");
+
+openSettingsBtn.addEventListener("click", ()=> {
+  // populate inputs from SETTINGS
+  document.getElementById("inpTheme").value = SETTINGS.theme || "dark";
+  document.getElementById("inpUnits").value = SETTINGS.unitMode || "A_W";
+  document.getElementById("inpDelayWarn").value = (SETTINGS.updateDelayWarn === false) ? "false" : "true";
+  for(let i=0;i<4;i++) document.getElementById("m"+i).value = SETTINGS.monitorNames[i] || "";
+  modalBackdrop.style.display = "flex";
+  modalBackdrop.setAttribute("aria-hidden","false");
+});
+
+cancelBtn.addEventListener("click", ()=> {
+  modalBackdrop.style.display = "none";
+  modalBackdrop.setAttribute("aria-hidden","true");
+});
+
+saveBtn.addEventListener("click", async ()=> {
+  // gather values
+  const newTheme = document.getElementById("inpTheme").value;
+  const newUnit = document.getElementById("inpUnits").value;
+  const newDelayWarn = document.getElementById("inpDelayWarn").value === "true";
+  const newNames = [ document.getElementById("m0").value || "DC Soket Çıkışı 1",
+                     document.getElementById("m1").value || "DC Soket Çıkışı 2",
+                     document.getElementById("m2").value || "USB-A Portu 1",
+                     document.getElementById("m3").value || "USB-A Portu 2" ];
+
+  const newSettings = {
+    theme: newTheme,
+    unitMode: newUnit,
+    updateDelayWarn: newDelayWarn,
+    monitorNames: newNames
+  };
+
+  // save to server
+  await saveSettingsToServer(newSettings);
+  modalBackdrop.style.display = "none";
+  modalBackdrop.setAttribute("aria-hidden","true");
+});
+
+/* close modal on ESC */
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape") { modalBackdrop.style.display = "none"; modalBackdrop.setAttribute("aria-hidden","true"); }
+});
+
+/* ------------------------
+   Start: fetch settings & prepare UI
+   ------------------------ */
+(async function init(){
+  // build empty structure (will be filled by applySettingsToUI)
+  buildMonitorCards();
+  setupCharts();
+  await fetchSettings();
+
+  // set initial lastTs to now to avoid immediate offline alarm until data arrives
+  lastTs = Date.now();
+
+  // safety: if websocket doesn't send settings, poll settings every 30s
+  setInterval(()=>fetchSettings(), 30000);
+})();
+
 </script>
 </body>
 </html>
