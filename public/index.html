@@ -6,259 +6,47 @@
 <title>Akıllı DC Güç Ünitesi</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  /* ==== LOGIN EKRANI (Koyu Tema, Güç Analizörü Havası) ==== */
-  #loginScreen{
-    position:fixed;
-    inset:0;
-    background:#050608;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-    color:#eee;
-  }
-  #loginBox{
-    background:#111318;
-    border:1px solid #292c34;
-    border-radius:14px;
-    padding:24px 26px 22px;
-    width:320px;
-    box-shadow:0 18px 40px rgba(0,0,0,0.7);
-    text-align:center;
-  }
-  #loginLogo{
-    width:80px;
-    height:80px;
-    object-fit:contain;
-    margin-bottom:10px;
-  }
-  #loginBox h2{
-    margin:4px 0 2px;
-    font-size:19px;
-    font-weight:700;
-  }
-  #loginBox p{
-    margin:0 0 12px;
-    font-size:12px;
-    opacity:0.8;
-  }
-  #loginBox input{
-    width:100%;
-    padding:9px 10px;
-    margin:6px 0;
-    border-radius:8px;
-    border:1px solid #3a3f4a;
-    background:#05070b;
-    color:#eee;
-    font-size:14px;
-    outline:none;
-  }
-  #loginBox input:focus{
-    border-color:#1976d2;
-    box-shadow:0 0 0 1px rgba(25,118,210,0.4);
-  }
-  #loginBox button{
-    width:100%;
-    padding:9px 10px;
-    margin-top:10px;
-    background:#1976d2;
-    color:white;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:15px;
-    font-weight:600;
-  }
-  #loginBox button:active{
-    transform:scale(0.98);
-  }
-  #loginError{
-    color:#ff5252;
-    margin-top:6px;
-    font-size:13px;
-    display:none;
-  }
-  #loginInfo{
-    margin-top:8px;
-    font-size:11px;
-    opacity:0.7;
-  }
-
-  /* ==== LOGO HEADER İÇİN ==== */
-  .logo-small{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    object-fit:contain;
-  }
-
-  /* ==== SENİN MEVCUT TASARIMIN ==== */
-  body{
-    font-family:'Segoe UI',Arial,sans-serif;
-    margin:0;
-    padding:14px;
-    --bg:#eef2f6;
-    --text:#111;
-    --card:rgba(255,255,255,0.6);
-    --border:rgba(255,255,255,0.5);
-  }
-  body.dark{
-    --bg:#0b0c0e;
-    --text:#eee;
-    --card:rgba(20,20,20,0.48);
-    --border:rgba(255,255,255,0.06);
-  }
+  body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:14px;--bg:#eef2f6;--text:#111;--card:rgba(255,255,255,0.6);--border:rgba(255,255,255,0.5);}
+  body.dark{--bg:#0b0c0e;--text:#eee;--card:rgba(20,20,20,0.48);--border:rgba(255,255,255,0.06);}
   body{background:var(--bg);color:var(--text);}
-  .header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    max-width:1200px;
-    margin:0 auto 12px;
-  }
+  .header{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto 12px;}
   .title{display:flex;flex-direction:column;font-weight:700;}
   .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
   .right-controls{display:flex;align-items:center;gap:12px;}
-  .clock{
-    font-size:16px;
-    font-weight:600;
-    padding:8px 12px;
-    border-radius:10px;
-    background:var(--card);
-    border:1px solid var(--border);
-  }
+  .clock{font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border);}
   .lastData{font-size:12px;opacity:0.85;margin-top:6px;}
-  .themeToggle{
-    padding:6px 10px;
-    border-radius:6px;
-    border:1px solid var(--border);
-    background:var(--card);
-    cursor:pointer;
-    font-size:14px;
-  }
-  #logoutBtn{
-    padding:6px 10px;
-    border-radius:6px;
-    border:1px solid var(--border);
-    background:var(--card);
-    cursor:pointer;
-    font-size:13px;
-  }
-  .summary{
-    max-width:1200px;
-    margin:8px auto;
-    display:flex;
-    gap:12px;
-    justify-content:center;
-    flex-wrap:wrap;
-  }
-  .sum-card{
-    background:var(--card);
-    border:1px solid var(--border);
-    padding:12px 16px;
-    border-radius:12px;
-    min-width:120px;
-    text-align:center;
-  }
+  .themeToggle{padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:14px;}
+  .summary{max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .sum-card{background:var(--card);border:1px solid var(--border);padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;}
   .sum-label{font-size:12px;opacity:0.75;}
   .sum-val{font-size:18px;font-weight:700;margin-top:6px;}
-  .grid{
-    max-width:1200px;
-    margin:14px auto;
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:16px;
-    padding:0 6px;
-  }
+  .grid{max-width:1200px;margin:14px auto;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 6px;}
   @media(max-width:800px){.grid{grid-template-columns:1fr;}}
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:12px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);
-    transform-origin:top;
-    transform:scale(0.9);
-  }
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);transform-origin:top;transform:scale(0.9);}
   .card:hover{transform:scale(0.94);}
-  .card-title{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
-    margin-bottom:8px;
-    font-weight:700;
-    font-size:15px;
-  }
-  .status-dot{
-    width:12px;
-    height:12px;
-    border-radius:50%;
-    display:inline-block;
-    margin-left:8px;
-  }
-  .values-row{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    margin-bottom:8px;
-  }
+  .card-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:15px;}
+  .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
+  .values-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
   .val-box{text-align:center;flex:1;}
-  .val-num{
-    font-weight:800;
-    font-size:16px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-  }
+  .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
   .val-label{font-size:12px;opacity:0.75;margin-top:4px;}
   .tiny{font-size:12px;opacity:0.7;}
-  .flash-up{animation: flashGreen 420ms ease;}
-  .flash-down{animation: flashRed 420ms ease;}
-  @keyframes flashGreen{
-    0%{color:#00e676;text-shadow:0 0 8px #00e676}
-    100%{color:inherit;text-shadow:none}
-  }
-  @keyframes flashRed{
-    0%{color:#ff3b30;text-shadow:0 0 8px #ff3b30}
-    100%{color:inherit;text-shadow:none}
-  }
+  .flash-up{animation: flashGreen 420ms ease;} .flash-down{animation: flashRed 420ms ease;}
+  @keyframes flashGreen{0%{color:#00e676;text-shadow:0 0 8px #00e676}100%{color:inherit;text-shadow:none}}
+  @keyframes flashRed{0%{color:#ff3b30;text-shadow:0 0 8px #ff3b30}100%{color:inherit;text-shadow:none}}
   .status-text{font-size:13px;margin-top:6px;}
   .ic{width:16px;height:16px;display:inline-block;margin-right:6px;}
 </style>
 </head>
 <body>
-
-<!-- ========= LOGIN EKRANI ========= -->
-<div id="loginScreen">
-  <div id="loginBox">
-    <img id="loginLogo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png" alt="Logo">
-    <h2>Akıllı DC Güç Ünitesi</h2>
-    <p>Yetkili kullanıcı girişi gereklidir.</p>
-    <input type="text" id="user" placeholder="Kullanıcı adı">
-    <input type="password" id="pass" placeholder="Şifre">
-    <button onclick="login()">Giriş</button>
-    <div id="loginError">Kullanıcı adı veya şifre hatalı!</div>
-    <div id="loginInfo">3 hatalı denemede 30 saniye bloke olur.</div>
-  </div>
-</div>
-
-<!-- ========= ASIL İÇERİK (LOGIN SONRA AÇILIR) ========= -->
-<div id="realContent" style="display:none;">
-
 <div class="header">
-  <div style="display:flex;align-items:center;gap:10px;">
-    <img class="logo-small" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png" alt="Logo">
-    <div class="title">
-      <div>Akıllı DC Güç Ünitesi</div>
-      <div class="subtitle" id="globalStatusText">Bağlantı kontrol ediliyor...</div>
-    </div>
+  <div class="title">
+    <div>Akıllı DC Güç Ünitesi</div>
+    <div class="subtitle" id="globalStatusText">Bağlantı kontrol ediliyor...</div>
   </div>
   <div class="right-controls">
     <div class="clock" id="realtimeClock">--:--:--</div>
     <button class="themeToggle" id="themeToggle">🌙</button>
-    <button id="logoutBtn" onclick="logout()">Çıkış</button>
     <div style="display:flex;flex-direction:column;align-items:center;">
       <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
     </div>
@@ -273,78 +61,7 @@
 
 <div class="grid" id="grid"></div>
 
-</div><!-- realContent bitiş -->
-
 <script>
-/* ========== LOGIN & GÜVENLİK KISMI ========== */
-
-const USERNAME = "smartsocketproject";
-const PASSWORD = "locationpassword81";
-
-let attempts = Number(localStorage.getItem("loginAttempts")) || 0;
-let blockUntil = Number(localStorage.getItem("blockUntil")) || 0;
-
-const loginScreen = document.getElementById("loginScreen");
-const realContent = document.getElementById("realContent");
-const loginError = document.getElementById("loginError");
-
-/* Sayfa açılışında daha önce login var mı kontrol et */
-if(localStorage.getItem("loggedIn") === "true"){
-  loginScreen.style.display = "none";
-  realContent.style.display = "block";
-} else {
-  loginScreen.style.display = "flex";
-  realContent.style.display = "none";
-}
-
-function login(){
-  const now = Date.now();
-
-  // Blok süresi kontrolü
-  if(blockUntil > now){
-    const waitSec = Math.ceil((blockUntil - now) / 1000);
-    loginError.innerText = `Çok fazla deneme yapıldı. ${waitSec} saniye bekleyin.`;
-    loginError.style.display = "block";
-    setTimeout(()=> loginError.style.display="none", 2000);
-    return;
-  }
-
-  const u = document.getElementById("user").value.trim();
-  const p = document.getElementById("pass").value.trim();
-
-  if(u === USERNAME && p === PASSWORD){
-    localStorage.setItem("loggedIn","true");
-    localStorage.removeItem("loginAttempts");
-    localStorage.removeItem("blockUntil");
-    loginScreen.style.display = "none";
-    realContent.style.display = "block";
-    return;
-  }
-
-  // Yanlış giriş
-  attempts++;
-  localStorage.setItem("loginAttempts", attempts);
-
-  if(attempts >= 3){
-    blockUntil = Date.now() + 30000; // 30 saniye
-    localStorage.setItem("blockUntil", blockUntil);
-    loginError.innerText = "3 kez hatalı giriş. 30 saniye bekleyin.";
-  } else {
-    loginError.innerText = "Kullanıcı adı veya şifre hatalı!";
-  }
-  loginError.style.display = "block";
-  setTimeout(()=> loginError.style.display="none", 2000);
-}
-
-function logout(){
-  localStorage.removeItem("loggedIn");
-  localStorage.removeItem("loginAttempts");
-  localStorage.removeItem("blockUntil");
-  location.reload();
-}
-
-/* ========== SENİN MEVCUT DASHBOARD KODUN ========== */
-
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 const OFFLINE_THRESHOLD=10000;
 let grid=document.getElementById("grid");
@@ -378,10 +95,7 @@ for(let i=0;i<MON_NAMES.length;i++){
     </div>
     <canvas id="chart${i}" height="110"></canvas>
   </div>`;
-  const div=document.createElement("div"); 
-  div.innerHTML=html; 
-  grid.appendChild(div.firstElementChild); 
-  lastReceived[i]=0;
+  const div=document.createElement("div"); div.innerHTML=html; grid.appendChild(div.firstElementChild); lastReceived[i]=0;
 }
 
 /* Charts setup */
@@ -455,7 +169,7 @@ function processData(obj){
     flash(aEl, a>oldA?"up":"down");
     flash(wEl, w>oldW?"up":"down");
 
-    /* --- Enerji Yok Eşik Kontrolü --- */
+    /* --- Enerji Yok Eşik Kontrolü (Senin istediğin) --- */
     if(a < 0.005 || w < 0.05){
       statEl.innerText="Enerji yok⚠️";
       dotEl.style.background="#ff9800";
