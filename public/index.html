@@ -10,7 +10,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 html, body {
   height: 100%;
   background: var(--bg);
@@ -57,7 +56,6 @@ body.dark{
   text-align:center;
   transition:0.25s;
 }
-
 #loginBox.shake{
   animation:shakeAnim 0.35s ease;
 }
@@ -72,7 +70,6 @@ body.dark{
   border:1px solid #c62828;
   box-shadow:0 0 8px rgba(198,40,40,0.6);
 }
-
 #loginBox.success{
   border:1px solid #00c853 !important;
   box-shadow:0 0 14px rgba(0,200,83,0.8) !important;
@@ -88,25 +85,21 @@ body.dark{
   padding:10px;border-radius:8px;
   border:1px solid var(--border);width:100%;
 }
-
 #passwordWrap{ position:relative;width:100%; }
 #togglePass{
   position:absolute;right:10px;top:50%;
   transform:translateY(-50%);
   cursor:pointer;font-size:18px;
 }
-
 #capsWarning{
   color:#c62828;font-size:12px;
   display:none;margin-top:-6px;
 }
-
 #loginBox button{
   padding:10px;border-radius:8px;border:none;
   cursor:pointer;background:#1E88E5;color:white;
   font-size:15px;font-weight:600;
 }
-
 #blockMsg{color:#c62828;font-size:13px;}
 
 .logoutBtn{
@@ -170,7 +163,7 @@ body.dark{
 .tiny{font-size:12px;opacity:0.7;}
 
 /* -----------------------------------------------------
-   SESSION MODAL (ORTA EKRAN)
+   SESSION MODAL (son 10 dk uyarısı)
 ----------------------------------------------------- */
 #sessionModal {
   position: fixed;
@@ -182,7 +175,6 @@ body.dark{
   justify-content: center;
   z-index: 9999;
 }
-
 #sessionModalBox {
   background: var(--card);
   border: 1px solid var(--border);
@@ -192,12 +184,10 @@ body.dark{
   text-align: center;
   animation: popIn .25s ease;
 }
-
 @keyframes popIn {
   0%{ transform: scale(0.7); opacity: 0; }
   100%{ transform: scale(1); opacity: 1; }
 }
-
 #sessionModal button {
   margin-top: 12px;
   width: 100%;
@@ -207,17 +197,70 @@ body.dark{
   cursor: pointer;
   font-weight: 600;
 }
-
 #continueBtn { background:#1E88E5;color:white; }
 #logoutBtn2 { background:#b71c1c;color:white;margin-top:10px; }
 
+/* -----------------------------------------------------
+   CİHAZ LİSTESİ MODAL (🔌 Bağlı Cihazlar)
+----------------------------------------------------- */
+#devicesModal {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+#devicesModalBox {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 12px;
+  width: 360px;
+  max-width: 95vw;
+  text-align: left;
+  animation: popIn .25s ease;
+}
+#devicesList {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+.deviceRow {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 0 10px 0;
+}
+.deviceRow:last-child {
+  border-bottom: none;
+}
+.deviceRow button {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  background:#b71c1c;
+  color:white;
+}
+#closeDevicesBtn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
 </style>
 </head>
 <body>
 
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
-
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png"
        style="width:110px;margin-bottom:10px;">
 
@@ -240,14 +283,22 @@ body.dark{
   </div>
 </div>
 
-<!-- SESSION MODAL -->
+<!-- SESSION MODAL (10 dk kala) -->
 <div id="sessionModal">
   <div id="sessionModalBox">
     <h3>Oturum Süreniz Dolmak Üzere</h3>
     <p>Yaklaşık <span id="remainingText">10</span> dakika içinde otomatik çıkış yapılacak.</p>
-
     <button id="continueBtn">Devam Et</button>
     <button id="logoutBtn2">Çıkış Yap</button>
+  </div>
+</div>
+
+<!-- CİHAZ LİSTESİ MODAL -->
+<div id="devicesModal">
+  <div id="devicesModalBox">
+    <h3>🔌 Bağlı Cihazlar</h3>
+    <div id="devicesList" class="tiny"></div>
+    <button id="closeDevicesBtn">Kapat</button>
   </div>
 </div>
 
@@ -263,6 +314,7 @@ body.dark{
     <div class="right-controls">
       <div class="clock" id="realtimeClock">--:--:--</div>
       <button class="themeToggle" id="themeToggle">🌙</button>
+      <button class="themeToggle" id="devicesBtn">🔌 Bağlı Cihazlar</button>
       <button class="logoutBtn" onclick="logout()">Çıkış</button>
       <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
     </div>
@@ -277,7 +329,6 @@ body.dark{
   <div class="grid" id="grid"></div>
 </div>
 
-
 <script>
 /* ============================================================
    LOGIN + TOKEN
@@ -288,15 +339,18 @@ function saveToken(t){ localStorage.setItem("sessionToken", t); }
 function loadToken(){ return localStorage.getItem("sessionToken"); }
 function clearToken(){ localStorage.removeItem("sessionToken"); }
 
+/* ENTER ile login */
 loginBox.addEventListener("keydown", e=>{
   if(e.key==="Enter") handleLogin();
 });
 
+/* CAPS LOCK kontrolü */
 document.getElementById("password").addEventListener("keyup", e=>{
   document.getElementById("capsWarning").style.display =
     e.getModifierState("CapsLock") ? "block" : "none";
 });
 
+/* Şifre göster/gizle */
 document.getElementById("togglePass").onclick = ()=>{
   const p=document.getElementById("password");
   p.type = p.type==="password" ? "text" : "password";
@@ -350,34 +404,35 @@ async function checkToken(){
 }
 
 /* LOGOUT */
+let sessionTimer = null;
 async function logout(){
   const token=loadToken();
   if(token){
     await fetch("/api/logout",{ method:"POST", headers:{ "authorization":token } });
   }
   clearToken();
+  if(sessionTimer) { clearInterval(sessionTimer); sessionTimer=null; }
   document.getElementById("dashboard").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
   alert("Güç ünitesinden ayrılınıyor...");
 }
 
-/* SHOW DASHBOARD */
+/* DASHBOARD AÇ */
 function showDashboard(){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("dashboard").style.display="block";
+  startSessionWatcher();
 }
 
-/* AUTO CHECK ON LOAD */
+/* SAYFA AÇILINCA TOKEN KONTROL */
 window.addEventListener("load", async()=>{
   if(await checkToken()) showDashboard();
-  startSessionWatcher();
 });
 
 /* ============================================================
-   SESSION TIMEOUT SYSTEM (Modal Destekli)
+   OTURUM SÜRESİ TAKİBİ (1 saat + 10 dk kala uyarı)
 ============================================================ */
-
-let remaining = 0;
+let remainingMs = 0;
 let modalShown = false;
 
 async function getSessionInfo(){
@@ -396,49 +451,130 @@ async function getSessionInfo(){
     return;
   }
 
-  remaining = data.remaining;
+  remainingMs = data.remainMs;
 
-  if(remaining <= 600 && !modalShown){
+  // 10 dakika = 600000 ms
+  if(remainingMs <= 10*60*1000 && remainingMs > 0 && !modalShown){
     modalShown = true;
-    showSessionModal();
+    const mins = Math.max(1, Math.ceil(remainingMs/60000));
+    document.getElementById("remainingText").innerText = mins;
+    document.getElementById("sessionModal").style.display = "flex";
   }
 
-  if(remaining <= 0){
+  if(remainingMs <= 0){
+    alert("Oturum süresi doldu.");
     logout();
   }
 }
 
-function showSessionModal(){
-  document.getElementById("remainingText").innerText = Math.ceil(remaining/60);
-  document.getElementById("sessionModal").style.display = "flex";
+function startSessionWatcher(){
+  if(sessionTimer) clearInterval(sessionTimer);
+  sessionTimer = setInterval(getSessionInfo, 5000);
 }
 
 document.getElementById("continueBtn").onclick = async ()=>{
   const token = loadToken();
+  if(!token) return;
 
-  const res = await fetch("/api/extend-session",{
+  const res = await fetch("/api/extend-session", {
     method:"POST",
     headers:{ authorization: token }
   });
-
   const data = await res.json();
 
   if(data.ok){
     modalShown = false;
     document.getElementById("sessionModal").style.display="none";
+    await getSessionInfo();
   }
 };
 
 document.getElementById("logoutBtn2").onclick = ()=> logout();
 
-function startSessionWatcher(){
-  setInterval(getSessionInfo, 5000);
+/* ============================================================
+   🔌 BAĞLI CİHAZLAR MODALİ
+============================================================ */
+document.getElementById("devicesBtn").onclick = openDevicesModal;
+document.getElementById("closeDevicesBtn").onclick = () => {
+  document.getElementById("devicesModal").style.display = "none";
+};
+
+function formatMins(ms){
+  return Math.max(0, Math.round(ms/60000));
+}
+
+async function openDevicesModal(){
+  const token = loadToken();
+  if(!token){
+    alert("Önce giriş yapmalısınız.");
+    return;
+  }
+
+  const res = await fetch("/api/active-sessions", {
+    headers:{ authorization: token }
+  });
+  const data = await res.json();
+
+  if(!data.ok){
+    alert("Oturum doğrulanamadı.");
+    return;
+  }
+
+  const list = data.sessions || [];
+  const container = document.getElementById("devicesList");
+  container.innerHTML = "";
+
+  if(list.length === 0){
+    container.innerHTML = "<div class='tiny'>Aktif oturum bulunamadı.</div>";
+  } else {
+    list.forEach((s, idx)=>{
+      const div = document.createElement("div");
+      div.className = "deviceRow";
+
+      const createdStr = new Date(s.createdAt).toLocaleString();
+      const mins = formatMins(s.remainMs);
+      const ua = (s.userAgent || "Bilinmeyen cihaz");
+      const shortUa = ua.length > 60 ? ua.slice(0,57) + "..." : ua;
+
+      div.innerHTML = `
+        <div class="tiny"><strong>${idx+1}.</strong> ${shortUa}</div>
+        <div class="tiny">IP: ${s.ip || "-"} | Giriş: ${createdStr}</div>
+        <div class="tiny">Kalan süre: ~${mins} dk</div>
+        <button class="deviceLogoutBtn" data-token="${s.token}">Oturumu Sonlandır</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  document.getElementById("devicesModal").style.display = "flex";
+
+  document.querySelectorAll(".deviceLogoutBtn").forEach(btn=>{
+    btn.onclick = async ()=>{
+      const targetToken = btn.getAttribute("data-token");
+      const myToken = loadToken();
+
+      await fetch("/api/logout-token",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          authorization: myToken
+        },
+        body: JSON.stringify({ token: targetToken })
+      });
+
+      if(targetToken === myToken){
+        document.getElementById("devicesModal").style.display="none";
+        logout();
+      } else {
+        openDevicesModal(); // listeyi tazele
+      }
+    };
+  });
 }
 
 /* ============================================================
-   DASHBOARD CODE (Tamamen korunmuş)
+   DASHBOARD KODU (Sensör verisi)
 ============================================================ */
-
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 const OFFLINE_THRESHOLD=10000;
 
@@ -505,7 +641,7 @@ for(let i=0;i<MON_NAMES.length;i++){
 function flash(el,type){
   el.classList.remove("flash-up","flash-down");
   void el.offsetWidth;
-  el.classList.add(type==="up"?"flash-up":"down");
+  el.classList.add(type==="up"?"flash-up":"flash-down");
   setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
 }
 
@@ -618,7 +754,6 @@ function makeAllOffline(){
 
   document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
 }
-
 </script>
 
 </body>
