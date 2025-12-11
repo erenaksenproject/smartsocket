@@ -15,7 +15,6 @@
   .right-controls{display:flex;align-items:center;gap:12px;}
   .clock{font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border);}
   .lastData{font-size:12px;opacity:0.85;margin-top:6px;}
-  .themeToggle{padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:14px;}
   .summary{max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
   .sum-card{background:var(--card);border:1px solid var(--border);padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;}
   .sum-label{font-size:12px;opacity:0.75;}
@@ -46,7 +45,6 @@
   </div>
   <div class="right-controls">
     <div class="clock" id="realtimeClock">--:--:--</div>
-    <button class="themeToggle" id="themeToggle">🌙 Tema</button>
     <div style="display:flex;flex-direction:column;align-items:center;">
       <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
     </div>
@@ -63,54 +61,63 @@
 
 <script>
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
+const SIM_INTERVAL_MS=3000;
 const OFFLINE_THRESHOLD=10000;
+
+// ⚠ Enerji yok algılaması için eşik
+const ENERGY_THRESHOLD = 0.00;
+
 let grid=document.getElementById("grid");
 let charts=[],lastReceived=[],lastGlobal=Date.now();
 
-/* Clock */
-setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
-
-/* Theme toggle */
-document.getElementById("themeToggle").onclick=()=>{
-  document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText=document.body.classList.contains("dark")?"☀️ Tema":"🌙 Tema";
-};
+function fmtTs(ts){if(!ts) return "—"; const d=new Date(ts); return d.toLocaleDateString()+" "+d.toLocaleTimeString();}
+function flash(el,type){el.classList.remove("flash-up","flash-down"); void el.offsetWidth; el.classList.add(type==="up"?"flash-up":"flash-down"); setTimeout(()=>{el.classList.remove("flash-up","flash-down");},400);}
 
 /* Build monitors */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
-  const html=`<div class="card" id="${id}">
-    <div class="card-title">
-      <strong>${MON_NAMES[i]}</strong>
-      <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
-    </div>
-    <div class="values-row">
-      <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç</div></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
-      <div class="tiny status-text" id="stat${i}">Durum: —</div>
-    </div>
-    <canvas id="chart${i}" height="110"></canvas>
-  </div>`;
-  const div=document.createElement("div"); div.innerHTML=html; grid.appendChild(div.firstElementChild); lastReceived[i]=0;
+  const html=`
+    <div class="card" id="${id}">
+      <div class="card-title">
+        <strong>${MON_NAMES[i]}</strong>
+        <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
+      </div>
+      <div class="values-row">
+        <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt</div></div>
+        <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım</div></div>
+        <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
+        <div class="tiny status-text" id="stat${i}">Durum: —</div>
+      </div>
+      <canvas id="chart${i}" height="110"></canvas>
+    </div>`;
+  const div=document.createElement("div"); 
+  div.innerHTML=html; 
+  grid.appendChild(div.firstElementChild); 
+  lastReceived[i]=0;
 }
 
-/* Charts setup */
+/* Charts */
 for(let i=0;i<MON_NAMES.length;i++){
   const ctx=document.getElementById("chart"+i).getContext("2d");
-  charts[i]=new Chart(ctx,{type:'line',data:{labels:[],datasets:[
-    {label:'Volt (V)', data:[], borderColor:'#1E90FF', backgroundColor:'rgba(30,144,255,0.06)', tension:0.25, pointRadius:0},
-    {label:'Akım (A)', data:[], borderColor:'#FF3B30', backgroundColor:'rgba(255,59,48,0.06)', tension:0.25, pointRadius:0},
-    {label:'Güç (W)', data:[], borderColor:'#00C853', backgroundColor:'rgba(0,200,83,0.06)', tension:0.25, pointRadius:0}
-  ]}, options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}});
+  charts[i]=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:[],
+      datasets:[
+        {label:'Volt (V)', data:[], borderColor:'#1E90FF', backgroundColor:'rgba(30,144,255,0.06)', tension:0.25, pointRadius:0},
+        {label:'Akım (A)', data:[], borderColor:'#FF3B30', backgroundColor:'rgba(255,59,48,0.06)', tension:0.25, pointRadius:0},
+        {label:'Güç (W)', data:[], borderColor:'#00C853', backgroundColor:'rgba(0,200,83,0.06)', tension:0.25, pointRadius:0}
+      ]
+    },
+    options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}
+  });
 }
 
-/* Helpers */
-function fmtTs(ts){if(!ts) return "—"; const d=new Date(ts); return d.toLocaleDateString()+" "+d.toLocaleTimeString();}
-function flash(el,type){el.classList.remove("flash-up","flash-down"); void el.offsetWidth; el.classList.add(type==="up"?"flash-up":"flash-down"); setTimeout(()=>{el.classList.remove("flash-up","flash-down");},400);}
+/* Realtime clock */
+setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
 
 /* WebSocket */
 const protocol=(location.protocol==="https:")?"wss:":"ws:";
@@ -119,72 +126,98 @@ const socket=new WebSocket(WS_URL);
 
 let lastTs=0;
 
+socket.addEventListener("open",()=>{console.log("WebSocket bağlandı");});
+socket.addEventListener("close",()=>{console.log("Bağlantı koptu");});
 socket.addEventListener("message",(e)=>{
   try{
     const msg=JSON.parse(e.data);
-    if(msg.type==="init"||msg.type==="update"){
+    if(msg.type==="init" || msg.type==="update"){
       lastTs=msg.ts||Date.now();
       document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
       processData(msg.data||{});
-    } else if(msg.type==="offline"){ makeAllOffline(); }
+    }
+    else if(msg.type==="offline"){ makeAllOffline(); }
   }catch(err){console.error(err);}
 });
 
 /* Process data */
 function processData(obj){
   let totalV=0,totalA=0,totalW=0;
-  let anyActive=false;
+
   for(let i=0;i<MON_NAMES.length;i++){
     const d=obj["monitor"+(i+1)]?.hat1 || null;
-    const vEl=document.getElementById("v"+i), aEl=document.getElementById("a"+i), wEl=document.getElementById("w"+i), tEl=document.getElementById("t"+i);
-    const statEl=document.getElementById("stat"+i), dotEl=document.getElementById("dot"+i);
+
+    const vEl=document.getElementById("v"+i);
+    const aEl=document.getElementById("a"+i);
+    const wEl=document.getElementById("w"+i);
+    const tEl=document.getElementById("t"+i);
+    const statEl=document.getElementById("stat"+i);
+    const dotEl=document.getElementById("dot"+i);
     const ch=charts[i];
 
     if(!d){
       vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-";
-      statEl.innerText="Bağlantı yok — kontrol edilmeli"; dotEl.style.background="#f33";
+      statEl.innerText="Bağlantı yok — kontrol edilmeli";
+      dotEl.style.background="#f33";
       continue;
     }
 
-    const oldV=parseFloat(vEl.innerText)||0, oldA=parseFloat(aEl.innerText)||0, oldW=parseFloat(wEl.innerText)||0;
-    vEl.innerText=d.voltage?.value?.toFixed(2)||"-"; aEl.innerText=d.current?.value?.toFixed(2)||"-"; wEl.innerText=d.power?.value?.toFixed(2)||"-"; tEl.innerText=d.temperature?.value?.toFixed(1)||"-";
-    flash(vEl,d.voltage.value>oldV?"up":"down"); flash(aEl,d.current.value>oldA?"up":"down"); flash(wEl,d.power.value>oldW?"up":"down");
+    const oldV=parseFloat(vEl.innerText)||0;
+    const oldA=parseFloat(aEl.innerText)||0;
+    const oldW=parseFloat(wEl.innerText)||0;
 
-    // Enerji yok kontrolü
-    if(d.power.value===0 || d.current.value===0){
-      statEl.innerText="Enerji yok"; dotEl.style.background="#ff9800";
+    vEl.innerText=d.voltage?.value?.toFixed(2)||"-";
+    aEl.innerText=d.current?.value?.toFixed(2)||"-";
+    wEl.innerText=d.power?.value?.toFixed(2)||"-";
+    tEl.innerText=d.temperature?.value?.toFixed(1)||"-";
+
+    flash(vEl,d.voltage.value>oldV?"up":"down"); 
+    flash(aEl,d.current.value>oldA?"up":"down"); 
+    flash(wEl,d.power.value>oldW?"up":"down");
+
+    /* 🔥 Enerji yok kontrolü (akım & güç eşik altında) */
+    if(Math.abs(d.current.value) < ENERGY_THRESHOLD && Math.abs(d.power.value) < ENERGY_THRESHOLD){
+        statEl.innerText="Enerji yok";
+        dotEl.style.background="#ff9800"; // turuncu enerji yok
     } else {
-      statEl.innerText="Bağlantı: Aktif"; dotEl.style.background="#0f0";
-      anyActive=true;
+        statEl.innerText="Bağlantı: Aktif";
+        dotEl.style.background="#0f0"; // yeşil aktif
     }
 
-    if(ch.data.labels.length>=30){ ch.data.labels.shift(); ch.data.datasets.forEach(ds=>ds.data.shift()); }
-    ch.data.labels.push(""); ch.data.datasets[0].data.push(d.voltage.value); ch.data.datasets[1].data.push(d.current.value); ch.data.datasets[2].data.push(d.power.value); ch.update("none");
+    /* Chart update */
+    if(ch.data.labels.length>=30){
+      ch.data.labels.shift();
+      ch.data.datasets.forEach(ds=>ds.data.shift());
+    }
 
-    totalV+=d.voltage.value; totalA+=d.current.value; totalW+=d.power.value;
+    ch.data.labels.push("");
+    ch.data.datasets[0].data.push(d.voltage.value);
+    ch.data.datasets[1].data.push(d.current.value);
+    ch.data.datasets[2].data.push(d.power.value);
+    ch.update("none");
+
+    totalV+=d.voltage.value;
+    totalA+=d.current.value;
+    totalW+=d.power.value;
+
     lastReceived[i]=Date.now();
   }
+
   document.getElementById("sumV").innerText=totalV.toFixed(2)+" V";
   document.getElementById("sumA").innerText=totalA.toFixed(2)+" A";
   document.getElementById("sumW").innerText=totalW.toFixed(2)+" W";
-
-  // Global durum mesajı
-  const globalEl=document.getElementById("globalStatusText");
-  if(anyActive) globalEl.innerText="Bağlantı başarılı";
-  else if(Date.now()-lastTs>OFFLINE_THRESHOLD) globalEl.innerText="Sistem ile iletişim yok";
-  else globalEl.innerText="Bağlantı kontrol ediliyor...";
 }
 
+/* Offline */
 function makeAllOffline(){
   MON_NAMES.forEach((m,i)=>{
     document.getElementById("v"+i).innerText="-";
     document.getElementById("a"+i).innerText="-";
     document.getElementById("w"+i).innerText="-";
     document.getElementById("t"+i).innerText="-";
-    document.getElementById("stat"+i).innerText="Sistem ile iletişim yok";
+    document.getElementById("stat"+i).innerText="Bağlantı yok";
     document.getElementById("dot"+i).style.background="red";
   });
-  document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
 }
 
 setInterval(()=>{
