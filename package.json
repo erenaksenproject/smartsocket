@@ -1,13 +1,22 @@
 {
-  "name": "smart-socket-server",  // Projenin adı (sunucu tarafı)
-  "version": "1.0.0",            // Projenin sürüm numarası
-  "type": "module",              // Node.js'in ES module (import/export) kullanacağını söyler
-  "scripts": { 
-    "start": "node server.js"    // "npm start" yazıldığında çalışacak komut
+  "name": "smart-socket-server",
+  "_comment_name": "Projenin adı (sunucu uygulaması)",
+
+  "version": "1.0.0",
+  "_comment_version": "Projenin sürüm numarası",
+
+  "type": "module",
+  "_comment_type": "Node.js'in ES module (import/export) formatını kullanacağını belirtir",
+
+  "scripts": {
+    "start": "node server.js"
   },
-  "dependencies": {              // Projenin ihtiyaç duyduğu paketler
-    "cors": "^2.8.5",            // Tarayıcıdan gelen farklı domain isteklerine izin veren middleware
-    "express": "^4.18.2",        // HTTP sunucusu oluşturmak için kullanılan web framework
-    "ws": "^8.13.0"              // WebSocket desteği (canlı veri iletişimi)
-  }
+  "_comment_scripts": "npm start komutu çalıştırıldığında server.js dosyası başlatılır",
+
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "ws": "^8.13.0"
+  },
+  "_comment_dependencies": "Projenin çalışması için gereken paketler (CORS, Express ve WebSocket)"
 }
