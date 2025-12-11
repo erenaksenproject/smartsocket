@@ -6,13 +6,11 @@
 
 <title>Akıllı DC Güç Ünitesi</title>
 
-<!-- Logo favicon -->
 <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  /* ------------ GLOBAL VARIABLES ------------ */
+  /* ---------- GLOBAL THEMES ---------- */
   body{
     font-family:'Segoe UI',Arial,sans-serif;
     margin:0;padding:0;
@@ -30,58 +28,40 @@
     color:var(--text);
   }
 
-  /* ------------ LOGIN SCREEN ------------ */
+  /* ---------- LOGIN SCREEN ---------- */
   #loginScreen{
-    position:fixed;
-    inset:0;
-    background:var(--bg);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
+    position:fixed; inset:0; background:var(--bg);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
     gap:18px;
   }
   #loginBox{
     background:var(--card);
     border:1px solid var(--border);
-    padding:22px 28px;
+    padding:22px 28px; width:300px;
     border-radius:14px;
-    width:300px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+    display:flex; flex-direction:column; gap:12px;
     text-align:center;
   }
   #loginBox input{
-    padding:10px;
-    border-radius:8px;
-    border:1px solid var(--border);
-    width:100%;
+    padding:10px;border-radius:8px;
+    border:1px solid var(--border);width:100%;
   }
   #loginBox button{
-    padding:10px;
-    border-radius:8px;
-    border:none;
-    cursor:pointer;
-    background:#1E88E5;
-    color:white;
-    font-size:15px;
-    font-weight:600;
+    padding:10px;border-radius:8px;border:none;
+    cursor:pointer;background:#1E88E5;color:white;
+    font-size:15px;font-weight:600;
   }
-  #blockMsg{
-    color:#c62828;
-    font-size:13px;
-  }
+  #blockMsg{color:#c62828;font-size:13px;}
+
   .logoutBtn{
-    cursor:pointer;
-    font-size:15px;
-    padding:6px 10px;
-    border-radius:8px;
-    border:1px solid var(--border);
-    background:var(--card);
+    cursor:pointer;font-size:15px;
+    padding:6px 10px;border-radius:8px;
+    border:1px solid var(--border);background:var(--card);
   }
 
-  /* ---------------------------------- DASHBOARD CSS (SENİN KODUN) ---------------------------------- */
+  /* ---------- DASHBOARD STYLE (ORİJİNAL KODUN) ---------- */
+
   .header{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto 12px;padding:14px;}
   .title{display:flex;flex-direction:column;font-weight:700;}
   .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
@@ -92,8 +72,6 @@
 
   .summary{max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:0 14px;}
   .sum-card{background:var(--card);border:1px solid var(--border);padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;}
-  .sum-label{font-size:12px;opacity:0.75;}
-  .sum-val{font-size:18px;font-weight:700;margin-top:6px;}
 
   .grid{max-width:1200px;margin:14px auto;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 14px;}
   @media(max-width:800px){.grid{grid-template-columns:1fr;}}
@@ -111,39 +89,32 @@
 
   .flash-up{animation:flashGreen 420ms ease;}
   .flash-down{animation:flashRed 420ms ease;}
-
-  @keyframes flashGreen{
-    0%{color:#00e676;text-shadow:0 0 8px #00e676}
-    100%{color:inherit;text-shadow:none}
-  }
-  @keyframes flashRed{
-    0%{color:#ff3b30;text-shadow:0 0 8px #ff3b30}
-    100%{color:inherit;text-shadow:none}
-  }
+  @keyframes flashGreen{0%{color:#00e676;text-shadow:0 0 8px #00e676;}100%{color:inherit;}}
+  @keyframes flashRed{0%{color:#ff3b30;text-shadow:0 0 8px #ff3b30;}100%{color:inherit;}}
 
 </style>
 </head>
 <body>
 
-<!-- ========================== LOGIN SCREEN ========================== -->
+<!-- ================= LOGIN ================= -->
 <div id="loginScreen">
-  
-  <!-- Logo -->
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png"
-       style="width:110px; margin-bottom:10px;">
+       style="width:110px;margin-bottom:10px;">
 
   <div id="loginBox">
     <h3>Giriş Yap</h3>
+
     <input id="username" placeholder="Kullanıcı adı">
     <input id="password" type="password" placeholder="Şifre">
+
     <button onclick="handleLogin()">Giriş</button>
+
     <div id="loginError" style="color:#c62828;font-size:13px;"></div>
     <div id="blockMsg"></div>
   </div>
 </div>
 
-
-<!-- ========================== DASHBOARD (SENİN SİSTEMİN) ========================== -->
+<!-- ================= DASHBOARD ================= -->
 <div id="dashboard" style="display:none;">
 
   <div class="header">
@@ -154,6 +125,7 @@
 
     <div class="right-controls">
       <div class="clock" id="realtimeClock">--:--:--</div>
+
       <button class="themeToggle" id="themeToggle">🌙</button>
 
       <button class="logoutBtn" onclick="logout()">Çıkış</button>
@@ -164,7 +136,6 @@
     </div>
   </div>
 
-
   <div class="summary">
     <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.0 V</div></div>
     <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.00 A</div></div>
@@ -172,76 +143,104 @@
   </div>
 
   <div class="grid" id="grid"></div>
-
 </div>
 
-
 <script>
-/* ====================== LOGIN LOGIC ====================== */
+/* ============================================================
+              LOGIN – BACKEND DOĞRULAMALI TOKEN SİSTEMİ
+============================================================ */
 
-const CORRECT_USER = "smartsocket";
-const CORRECT_PASS = "panelpassword81";
+function saveToken(t){ localStorage.setItem("sessionToken", t); }
+function loadToken(){ return localStorage.getItem("sessionToken"); }
+function clearToken(){ localStorage.removeItem("sessionToken"); }
 
-let failCount = 0;
-let blockedUntil = 0;
+async function handleLogin(){
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
 
-function handleLogin(){
-  const now = Date.now();
+  const res = await fetch("/api/login", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ username, password })
+  });
 
-  if(now < blockedUntil){
-    document.getElementById("blockMsg").innerText =
-      "Çok fazla deneme! " + Math.ceil((blockedUntil - now)/1000) +
-      " saniye sonra tekrar deneyin.";
+  const data = await res.json();
+
+  if(data.ok){
+    saveToken(data.token);
+    showDashboard();
     return;
   }
 
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value;
-
-  if(u === CORRECT_USER && p === CORRECT_PASS){
-    failCount = 0;
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
-    return;
+  if(data.error === "wrong"){
+    document.getElementById("loginError").innerText = "Hatalı kullanıcı adı veya şifre!";
   }
-
-  failCount++;
-  document.getElementById("loginError").innerText = "Hatalı kullanıcı adı veya şifre!";
-
-  if(failCount >= 3){
-    blockedUntil = Date.now() + 30000; // 30 saniye
-    failCount = 0;
+  else if(data.error === "blocked"){
     document.getElementById("blockMsg").innerText =
-      "Hesap 30 saniyeliğine bloke edildi!";
+      `Çok fazla deneme! ${data.remain} saniye sonra tekrar deneyin.`;
+  }
+  else if(data.error === "blocked30"){
+    document.getElementById("blockMsg").innerText = "3 hatalı giriş! 30 saniye bloke edildi!";
   }
 }
 
-function logout(){
+async function checkToken(){
+  const token = loadToken();
+  if(!token) return false;
+
+  const res = await fetch("/api/check-token", {
+    headers:{ "authorization": token }
+  });
+
+  const data = await res.json();
+  return data.ok === true;
+}
+
+async function logout(){
+  const token = loadToken();
+  if(token){
+    await fetch("/api/logout", {
+      method:"POST",
+      headers:{ "authorization": token }
+    });
+  }
+  clearToken();
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("loginScreen").style.display="flex";
   alert("Güç ünitesinden ayrılınıyor...");
-  document.getElementById("dashboard").style.display = "none";
-  document.getElementById("loginScreen").style.display = "flex";
 }
 
+/* DASHBOARD AÇMA */
+async function showDashboard(){
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+}
 
-/* ====================== THEME SWITCH ====================== */
-document.getElementById("themeToggle").onclick = ()=>{
-  document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText =
-    document.body.classList.contains("dark") ? "☀️" : "🌙";
-};
+/* SAYFA AÇILINCA TOKEN KONTROL */
+window.addEventListener("load", async ()=>{
+  if(await checkToken()) showDashboard();
+});
 
-
-/* ====================== DASHBOARD (SENİN ORİJİNAL KODUN) ====================== */
+/* ============================================================
+                   ORİJİNAL DASHBOARD KODUN
+============================================================ */
 
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
 const OFFLINE_THRESHOLD=10000;
+
 let grid=document.getElementById("grid");
 let charts=[],lastReceived=[],lastGlobal=Date.now();
 
-/* clock */
+/* Saat */
 setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString();},1000);
 
-/* build monitor cards */
+/* Tema */
+document.getElementById("themeToggle").onclick=()=>{
+  document.body.classList.toggle("dark");
+  document.getElementById("themeToggle").innerText=document.body.classList.contains("dark")?"☀️":"🌙";
+};
+
+/* Monitör kartlarını oluştur */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
   const html=`<div class="card" id="${id}">
@@ -249,22 +248,29 @@ for(let i=0;i<MON_NAMES.length;i++){
       <strong>${MON_NAMES[i]}</strong>
       <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
     </div>
+
     <div class="values-row">
       <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
       <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
       <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
     </div>
+
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
       <div class="tiny status-text" id="stat${i}">Durum: —</div>
     </div>
+
     <canvas id="chart${i}" height="110"></canvas>
   </div>`;
-  const div=document.createElement("div"); div.innerHTML=html; grid.appendChild(div.firstElementChild);
+
+  const div=document.createElement("div");
+  div.innerHTML=html;
+  grid.appendChild(div.firstElementChild);
+
   lastReceived[i]=0;
 }
 
-/* charts */
+/* Grafikler */
 for(let i=0;i<MON_NAMES.length;i++){
   const ctx=document.getElementById("chart"+i).getContext("2d");
   charts[i]=new Chart(ctx,{
@@ -281,42 +287,50 @@ for(let i=0;i<MON_NAMES.length;i++){
   });
 }
 
-
-function fmtTs(ts){ if(!ts) return "—"; const d=new Date(ts); return d.toLocaleDateString()+" "+d.toLocaleTimeString(); }
-
+/* Flash effect */
 function flash(el,type){
   el.classList.remove("flash-up","flash-down");
   void el.offsetWidth;
   el.classList.add(type==="up"?"flash-up":"flash-down");
-  setTimeout(()=>{el.classList.remove("flash-up","flash-down");},400);
+  setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
 }
 
-
-/* websocket */
+/* WebSocket bağlantısı */
 const protocol=(location.protocol==="https:")?"wss:":"ws:";
 const WS_URL=protocol+"//"+location.host;
 const socket=new WebSocket(WS_URL);
 
 let lastTs=0;
 
+/* Veri geldiğinde dashboard güncelle */
 socket.addEventListener("message",(e)=>{
-  try{
-    const msg=JSON.parse(e.data);
-    if(msg.type==="init"||msg.type==="update"){
-      lastTs=msg.ts||Date.now();
-      document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
-      processData(msg.data||{});
-    }else if(msg.type==="offline"){ makeAllOffline(); }
-  }catch(err){console.error(err);}
+  const msg=JSON.parse(e.data);
+
+  if(msg.type==="init"||msg.type==="update"){
+    lastTs=msg.ts;
+    document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
+    processData(msg.data||{});
+  }
+  else if(msg.type==="offline"){
+    makeAllOffline();
+  }
 });
 
+/* Tarih formatı */
+function fmtTs(ts){
+  if(!ts) return "—";
+  const d=new Date(ts);
+  return d.toLocaleDateString()+" "+d.toLocaleTimeString();
+}
 
+/* Veriyi dashboard’a yazdır */
 function processData(obj){
   let totalV=0,totalA=0,totalW=0;
   let anyActive=false;
 
   for(let i=0;i<MON_NAMES.length;i++){
     const d=obj["monitor"+(i+1)]?.hat1;
+
     const vEl=document.getElementById("v"+i);
     const aEl=document.getElementById("a"+i);
     const wEl=document.getElementById("w"+i);
@@ -339,11 +353,11 @@ function processData(obj){
     wEl.innerText=w.toFixed(2);
     tEl.innerText=d.temperature.value.toFixed(1);
 
-    flash(vEl,v>"oldV"?"up":"down");
-    flash(aEl,a>"oldA"?"up":"down");
-    flash(wEl,w>"oldW"?"up":"down");
+    flash(vEl,"up");
+    flash(aEl,"up");
+    flash(wEl,"up");
 
-    /* Energy check */
+    /* Enerji durumu */
     if(a<0.005 || w<0.05){
       statEl.innerText="Enerji yok ⚠️";
       dotEl.style.background="#ff9800";
@@ -353,6 +367,7 @@ function processData(obj){
       anyActive=true;
     }
 
+    /* Grafik ekleme */
     if(ch.data.labels.length>=30){
       ch.data.labels.shift();
       ch.data.datasets.forEach(ds=>ds.data.shift());
@@ -364,7 +379,6 @@ function processData(obj){
     ch.update("none");
 
     totalV+=v; totalA+=a; totalW+=w;
-    lastReceived[i]=Date.now();
   }
 
   document.getElementById("sumV").innerText=totalV.toFixed(2)+" V";
@@ -378,7 +392,7 @@ function processData(obj){
   else globalEl.innerText="Bağlantı kontrol ediliyor...";
 }
 
-
+/* Offline durumunda dashboard temizle */
 function makeAllOffline(){
   MON_NAMES.forEach((m,i)=>{
     document.getElementById("v"+i).innerText="-";
@@ -391,12 +405,6 @@ function makeAllOffline(){
 
   document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
 }
-
-setInterval(()=>{
-  if(Date.now()-lastTs>OFFLINE_THRESHOLD){
-    makeAllOffline();
-  }
-},1000);
 
 </script>
 
