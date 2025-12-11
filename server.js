@@ -1,85 +1,85 @@
 // ================= LOGIN + TOKEN DESTEKLİ SERVER ==================
 
-import express from "express";
-import http from "http";
-import { WebSocketServer } from "ws";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-import crypto from "crypto";
+import express from "express";                   // Web sunucusu oluşturmak için Express
+import http from "http";                         // HTTP sunucusu için Node modülü
+import { WebSocketServer } from "ws";            // Canlı veri iletişimi için WebSocket
+import cors from "cors";                         // Tarayıcıdan gelen isteklere izin verir
+import path from "path";                         // Dosya yolu işlemleri için
+import { fileURLToPath } from "url";             // ES module için __dirname oluşturmak
+import crypto from "crypto";                     // Güvenli token üretmek için
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);    // Dosya yolunu alır
+const __dirname = path.dirname(__filename);           // Bulunduğu klasörün yolu
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const app = express();                         // Express uygulaması oluştur
+const server = http.createServer(app);         // Express ile çalışan HTTP sunucusu
+const wss = new WebSocketServer({ server });   // HTTP sunucusu üzerinde WebSocket aç
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(cors());                               // CORS aktif (tarayıcı izinleri)
+app.use(express.json());                       // JSON gövdesini okumak için
+app.use(express.static(path.join(__dirname, "public"))); // /public klasörünü webden erişilebilir yap
 
 // =============================================================
 // LOGIN SİSTEMİ + MAKS 3 OTURUM + TOKEN SÜRESİ + CİHAZ BİLGİLERİ
 // =============================================================
 
-const VALID_USER = "smartsocket";
-const VALID_PASS = "panelpassword81";
+const VALID_USER = "smartsocket";               // Geçerli kullanıcı adı
+const VALID_PASS = "panelpassword81";           // Geçerli şifre
 
-// activeTokens: her giriş için bir kayıt
+// activeTokens: her giriş için bir kayıt tutar
 // { token, createdAt, userAgent, ip }
-let activeTokens = [];
+let activeTokens = [];                          // Aktif oturum listesi
 
-// 1 saatlik token süresi
-const TOKEN_LIFETIME = 60 * 60 * 1000;
+const TOKEN_LIFETIME = 60 * 60 * 1000;          // Token 1 saat geçerli
 
-// Hatalı giriş blok sistemi
-let failCount = 0;
-let blockedUntil = 0;
+// Hatalı giriş kontrol sistemi
+let failCount = 0;                              // Üst üste hatalı giriş sayısı
+let blockedUntil = 0;                           // Bloke süresi dolana kadar giriş kapalı
 
 // Süresi dolan token’ları temizle
 function cleanupExpiredTokens() {
   const now = Date.now();
   activeTokens = activeTokens.filter(
-    (t) => now - t.createdAt < TOKEN_LIFETIME
+    (t) => now - t.createdAt < TOKEN_LIFETIME   // Süresi geçenleri listeden çıkar
   );
 }
 
-// En fazla 3 aktif oturum kalsın (en eskileri sil)
+// En fazla 3 aktif oturum olsun, fazlaları düşür
 function pruneTokenLimit() {
   if (activeTokens.length <= 3) return;
-  activeTokens.sort((a, b) => a.createdAt - b.createdAt);
+  activeTokens.sort((a, b) => a.createdAt - b.createdAt); // En eski başa
   while (activeTokens.length > 3) {
-    activeTokens.shift();
+    activeTokens.shift();                                  // En eski oturumu sil
   }
 }
 
-// POST /api/login
+// POST /api/login → giriş işlemi
 app.post("/api/login", (req, res) => {
   const now = Date.now();
 
-  // Blok kontrolü
+  // Blok kontrolü (çok fazla yanlış giriş)
   if (now < blockedUntil) {
     return res.status(403).json({
       error: "blocked",
-      remain: Math.ceil((blockedUntil - now) / 1000),
+      remain: Math.ceil((blockedUntil - now) / 1000),  // Kaç saniye kaldığını döner
     });
   }
 
-  const { username, password } = req.body;
+  const { username, password } = req.body;     // Gönderilen kullanıcı bilgileri
 
   if (username === VALID_USER && password === VALID_PASS) {
-    failCount = 0;
+    failCount = 0;                              // Başarılı giriş → hata sayısını sıfırla
 
-    const token = crypto.randomBytes(24).toString("hex");
+    const token = crypto.randomBytes(24).toString("hex"); // Güvenli token üret
 
+    // IP adresi al
     const ipHeader = req.headers["x-forwarded-for"];
     const ip =
       (ipHeader && ipHeader.split(",")[0].trim()) ||
       req.socket.remoteAddress ||
       "unknown";
 
-    const userAgent = req.headers["user-agent"] || "unknown";
+    const userAgent = req.headers["user-agent"] || "unknown"; // Cihaz bilgisi
 
     activeTokens.push({
       token,
@@ -88,37 +88,37 @@ app.post("/api/login", (req, res) => {
       ip,
     });
 
-    cleanupExpiredTokens();
-    pruneTokenLimit();
+    cleanupExpiredTokens();   // Süresi dolan token'ları temizle
+    pruneTokenLimit();        // En fazla 3 oturum olsun
 
-    return res.json({ ok: true, token });
+    return res.json({ ok: true, token }); // Giriş başarılı → token döner
   }
 
-  // Hatalı şifre
+  // Hatalı giriş
   failCount++;
   if (failCount >= 3) {
-    blockedUntil = Date.now() + 30000;
+    blockedUntil = Date.now() + 30000; // 3 yanlış → 30 sn engelle
     failCount = 0;
     return res.status(403).json({ error: "blocked30" });
   }
 
-  return res.status(401).json({ error: "wrong" });
+  return res.status(401).json({ error: "wrong" }); // Yanlış şifre
 });
 
-// GET /api/check-token
+// GET /api/check-token → token geçerli mi?
 app.get("/api/check-token", (req, res) => {
   cleanupExpiredTokens();
 
-  const token = req.headers["authorization"];
+  const token = req.headers["authorization"];     // Header’dan token al
   const found = activeTokens.find((t) => t.token === token);
 
   if (found) {
-    return res.json({ ok: true });
+    return res.json({ ok: true });                // Token geçerli
   }
-  return res.json({ ok: false });
+  return res.json({ ok: false });                 // Geçersiz token
 });
 
-// GET /api/session-info  → kalan süre (ms)
+// GET /api/session-info → kalan süreyi döner
 app.get("/api/session-info", (req, res) => {
   cleanupExpiredTokens();
 
@@ -130,7 +130,7 @@ app.get("/api/session-info", (req, res) => {
   }
 
   const now = Date.now();
-  const remainMs = TOKEN_LIFETIME - (now - tk.createdAt);
+  const remainMs = TOKEN_LIFETIME - (now - tk.createdAt); // Kalan süre hesapla
 
   return res.json({
     ok: true,
@@ -138,30 +138,27 @@ app.get("/api/session-info", (req, res) => {
   });
 });
 
-// POST /api/extend-session → “Devam Et” tıklayınca süreyi yenile
+// POST /api/extend-session → oturumu uzat
 app.post("/api/extend-session", (req, res) => {
   cleanupExpiredTokens();
 
   const token = req.headers["authorization"];
   const tk = activeTokens.find((t) => t.token === token);
 
-  if (!tk) {
-    return res.json({ ok: false });
-  }
+  if (!tk) return res.json({ ok: false });
 
-  tk.createdAt = Date.now();
+  tk.createdAt = Date.now();    // Süreyi yenile
   return res.json({ ok: true });
 });
 
-// GET /api/active-sessions → bağlı bütün cihazlar
+// GET /api/active-sessions → bağlı tüm cihazları getir
 app.get("/api/active-sessions", (req, res) => {
   cleanupExpiredTokens();
 
   const callerToken = req.headers["authorization"];
   const caller = activeTokens.find((t) => t.token === callerToken);
-  if (!caller) {
-    return res.status(401).json({ ok: false });
-  }
+
+  if (!caller) return res.status(401).json({ ok: false }); // Yetkisiz istek
 
   const now = Date.now();
   const sessions = activeTokens.map((t) => ({
@@ -175,29 +172,28 @@ app.get("/api/active-sessions", (req, res) => {
   return res.json({ ok: true, sessions });
 });
 
-// POST /api/logout → sadece kendi oturumunu kapat
+// POST /api/logout → sadece kendi oturumunu kapatır
 app.post("/api/logout", (req, res) => {
   const token = req.headers["authorization"];
-  activeTokens = activeTokens.filter((t) => t.token !== token);
+  activeTokens = activeTokens.filter((t) => t.token !== token); // Token'i listeden çıkar
   return res.json({ ok: true });
 });
 
-// POST /api/logout-token → panelden seçilen herhangi bir token’ı düşür
+// POST /api/logout-token → panelden seçilen oturumu kapat
 app.post("/api/logout-token", (req, res) => {
   cleanupExpiredTokens();
 
   const callerToken = req.headers["authorization"];
   const caller = activeTokens.find((t) => t.token === callerToken);
+
   if (!caller) {
     return res.status(401).json({ ok: false });
   }
 
   const tokenToDrop = req.body?.token;
-  if (!tokenToDrop) {
-    return res.status(400).json({ ok: false });
-  }
+  if (!tokenToDrop) return res.status(400).json({ ok: false });
 
-  activeTokens = activeTokens.filter((t) => t.token !== tokenToDrop);
+  activeTokens = activeTokens.filter((t) => t.token !== tokenToDrop); // Oturumu düşür
   return res.json({ ok: true });
 });
 
@@ -205,11 +201,12 @@ app.post("/api/logout-token", (req, res) => {
 // SENSOR DATA & WEBSOCKET
 // =============================================================
 
-let lastData = {};
-let lastTimestamp = 0;
+let lastData = {};              // Son gelen sensör verisi
+let lastTimestamp = 0;          // Son veri zamanı
 
+// POST /api/data → ESP8266 buraya veri gönderir
 app.post("/api/data", (req, res) => {
-  const payload = req.body || {};
+  const payload = req.body || {}; // Gönderilen JSON
   lastData = payload;
   lastTimestamp = Date.now();
 
@@ -220,16 +217,18 @@ app.post("/api/data", (req, res) => {
   });
 
   wss.clients.forEach((c) => {
-    if (c.readyState === 1) c.send(msg);
+    if (c.readyState === 1) c.send(msg); // Tüm bağlı web istemcilerine gönder
   });
 
   return res.status(200).json({ status: "ok" });
 });
 
+// Son veriyi isteyen endpoint
 app.get("/api/last", (req, res) =>
   res.json({ data: lastData, ts: lastTimestamp })
 );
 
+// WebSocket bağlantısı kurulunca ilk veriyi gönder
 wss.on("connection", (ws) => {
   ws.send(
     JSON.stringify({
@@ -240,7 +239,7 @@ wss.on("connection", (ws) => {
   );
 });
 
-// 10 saniye veri gelmezse offline bildir
+// 10 saniye veri gelmezse "offline" bildir
 setInterval(() => {
   if (Date.now() - lastTimestamp > 10000) {
     const msg = JSON.stringify({
@@ -253,11 +252,11 @@ setInterval(() => {
       if (c.readyState === 1) c.send(msg);
     });
   }
-}, 3000);
+}, 3000); // 3 saniyede bir kontrol
 
 // =============================================================
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000;     // Port ayarı (Render vb. için)
 server.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`) // Sunucu çalıştı mesajı
 );
