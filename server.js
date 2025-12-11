@@ -20,15 +20,34 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // =============================================================
-// LOGIN SİSTEMİ
+// LOGIN SİSTEMİ + MAKS 3 OTURUM + TOKEN SÜRESİ
 // =============================================================
 
 const VALID_USER = "smartsocket";
 const VALID_PASS = "panelpassword81";
 
-let activeTokens = new Set();
+let activeTokens = [];  // { token, createdAt }
+
+// 1 saatlik token süresi
+const TOKEN_LIFETIME = 60 * 60 * 1000;
+
+// Hatalı giriş blok sistemi
 let failCount = 0;
 let blockedUntil = 0;
+
+// Token temizleme (süresi dolanlar)
+function cleanupExpiredTokens() {
+  const now = Date.now();
+  activeTokens = activeTokens.filter(t => now - t.createdAt < TOKEN_LIFETIME);
+}
+
+// En eski token’ı sil (maks 3 oturum için)
+function pruneTokenLimit() {
+  if (activeTokens.length > 3) {
+    activeTokens.sort((a, b) => a.createdAt - b.createdAt); // en eski üstte
+    activeTokens.shift(); // en eski token silinir
+  }
+}
 
 // POST /api/login
 app.post("/api/login", (req, res) => {
@@ -46,8 +65,14 @@ app.post("/api/login", (req, res) => {
 
   if (username === VALID_USER && password === VALID_PASS) {
     failCount = 0;
+
+    // yeni token oluştur
     const token = crypto.randomBytes(24).toString("hex");
-    activeTokens.add(token);
+
+    activeTokens.push({ token, createdAt: now });
+
+    cleanupExpiredTokens();
+    pruneTokenLimit();
 
     return res.json({ ok: true, token });
   }
@@ -65,19 +90,42 @@ app.post("/api/login", (req, res) => {
 
 // GET /api/check-token
 app.get("/api/check-token", (req, res) => {
-  const token = req.headers["authorization"];
+  cleanupExpiredTokens();
 
-  if (activeTokens.has(token)) {
+  const token = req.headers["authorization"];
+  const found = activeTokens.find(t => t.token === token);
+
+  if (found) {
     return res.json({ ok: true });
   }
 
-  return res.status(401).json({ ok: false });
+  return res.json({ ok: false });
+});
+
+// Yeni → Oturum kalan süre bilgisi
+app.get("/api/session-info", (req, res) => {
+  const token = req.headers["authorization"];
+  cleanupExpiredTokens();
+
+  const tk = activeTokens.find(t => t.token === token);
+
+  if (!tk) {
+    return res.json({ ok: false });
+  }
+
+  const now = Date.now();
+  const remain = TOKEN_LIFETIME - (now - tk.createdAt);
+
+  return res.json({
+    ok: true,
+    remainMs: remain
+  });
 });
 
 // POST /api/logout
 app.post("/api/logout", (req, res) => {
   const token = req.headers["authorization"];
-  activeTokens.delete(token);
+  activeTokens = activeTokens.filter(t => t.token !== token);
   return res.json({ ok: true });
 });
 
@@ -93,7 +141,11 @@ app.post("/api/data", (req, res) => {
   lastData = payload;
   lastTimestamp = Date.now();
 
-  const msg = JSON.stringify({ type: "update", data: lastData, ts: lastTimestamp });
+  const msg = JSON.stringify({
+    type: "update",
+    data: lastData,
+    ts: lastTimestamp
+  });
 
   wss.clients.forEach(c => {
     if (c.readyState === 1) c.send(msg);
@@ -107,12 +159,22 @@ app.get("/api/last", (req, res) =>
 );
 
 wss.on("connection", (ws) => {
-  ws.send(JSON.stringify({ type: "init", data: lastData, ts: lastTimestamp }));
+  ws.send(JSON.stringify({
+    type: "init",
+    data: lastData,
+    ts: lastTimestamp
+  }));
 });
 
+// 10 saniye veri gelmezse offline
 setInterval(() => {
   if (Date.now() - lastTimestamp > 10000) {
-    const msg = JSON.stringify({ type: "offline", data: null, ts: lastTimestamp });
+    const msg = JSON.stringify({
+      type: "offline",
+      data: null,
+      ts: lastTimestamp
+    });
+
     wss.clients.forEach(c => {
       if (c.readyState === 1) c.send(msg);
     });
@@ -122,4 +184,6 @@ setInterval(() => {
 // =============================================================
 
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () =>
+  console.log(`Server running on port ${PORT}`)
+);
