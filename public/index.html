@@ -1,111 +1,224 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Akıllı DC Güç Ünitesi</title>
-
-<!-- Favicon -->
-<link rel="icon" type="image/png"
-href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:14px;
-    --bg:#eef2f6;--text:#111;--card:rgba(255,255,255,0.6);--border:rgba(255,255,255,0.5);
-    background:var(--bg);color:var(--text);
-  }
-  body.dark{--bg:#0b0c0e;--text:#eee;--card:rgba(20,20,20,0.48);--border:rgba(255,255,255,0.06);}
+/* =========================================================
+   THEME & GLOBAL STYLES
+========================================================= */
+body{
+  font-family:'Segoe UI',Arial,sans-serif;
+  margin:0; padding:0;
+  --bg:#eef2f6; --text:#111;
+  --card:rgba(255,255,255,0.6);
+  --border:rgba(255,255,255,0.5);
+  background:var(--bg); color:var(--text);
+}
+body.dark{
+  --bg:#0b0c0e; --text:#eee;
+  --card:rgba(20,20,20,0.48);
+  --border:rgba(255,255,255,0.06);
+}
 
-  /* LOGIN EKRANI */
-  #login-screen{
-    position:fixed;top:0;left:0;width:100%;height:100%;
-    background:var(--bg);display:flex;justify-content:center;align-items:center;
-  }
-  #login-box{
-    background:var(--card);border:1px solid var(--border);padding:24px 30px;
-    border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);
-    width:320px;text-align:center;
-  }
-  #login-box img{width:115px;margin-bottom:18px;}
-  #login-box input{
-    width:100%;padding:10px;margin-top:10px;border-radius:8px;
-    border:1px solid var(--border);background:var(--bg);color:var(--text);
-  }
-  #login-box button{
-    width:100%;padding:10px;margin-top:14px;border-radius:8px;border:none;
-    background:#0077ff;color:white;font-weight:600;cursor:pointer;
-  }
-  #togglePass{
-    position:absolute;right:32px;margin-top:-31px;cursor:pointer;font-size:14px;
-  }
-  #login-error{color:#ff3b30;font-size:13px;margin-top:8px;display:none;}
+/* =========================================================
+   LOGIN PAGE
+========================================================= */
+#loginPage{
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  background:var(--bg);
+  z-index:20;
+}
+#loginBox{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:24px 30px;
+  border-radius:14px;
+  width:330px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.12);
+}
+#loginBox h2{
+  margin-top:0; margin-bottom:14px;
+  text-align:center;
+}
+.loginInput{
+  width:100%; padding:10px;
+  margin-top:8px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  font-size:15px;
+}
+#loginBtn{
+  width:100%; padding:10px;
+  margin-top:18px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  background:#1976d2;
+  color:white;
+  font-size:16px;
+  font-weight:600;
+}
+#loginError{
+  color:#e53935;
+  margin-top:12px;
+  text-align:center;
+  font-size:14px;
+}
 
-  /* HEADER */
-  .header{display:none;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto 12px;}
-  .title{display:flex;flex-direction:column;font-weight:700;}
-  .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
-  .right-controls{display:flex;align-items:center;gap:12px;}
-  .clock{font-size:16px;font-weight:600;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border);}
-  .themeToggle, #logoutBtn{
-    padding:6px 10px;border-radius:6px;border:1px solid var(--border);
-    background:var(--card);cursor:pointer;font-size:14px;
-  }
+/* =========================================================
+   LOGOUT MODAL
+========================================================= */
+#logoutModal{
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(4px);
+  z-index:30;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s ease;
+}
+#logoutModal.show{
+  opacity:1; pointer-events:auto;
+}
+.logoutBox{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:24px 26px;
+  border-radius:14px;
+  text-align:center;
+  box-shadow:0 8px 28px rgba(0,0,0,0.25);
+  animation:scaleIn 0.35s ease;
+}
+@keyframes scaleIn{
+  0%{transform:scale(.85); opacity:0}
+  100%{transform:scale(1); opacity:1}
+}
 
-  /* ÖZET */
-  .summary{display:none;max-width:1200px;margin:8px auto;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
-  .sum-card{background:var(--card);border:1px solid var(--border);padding:12px 16px;border-radius:12px;min-width:120px;text-align:center;}
-  .sum-label{font-size:12px;opacity:0.75;}
-  .sum-val{font-size:18px;font-weight:700;margin-top:6px;}
+/* =========================================================
+   DASHBOARD LAYOUT
+========================================================= */
+.header{
+  display:flex; justify-content:space-between; align-items:center;
+  max-width:1200px; margin:0 auto 12px; padding:14px;
+}
+.title{display:flex; flex-direction:column; font-weight:700;}
+.subtitle{font-size:12px; opacity:0.75; margin-top:4px;}
+.right-controls{display:flex; align-items:center; gap:12px;}
+.clock{font-size:16px; font-weight:600; padding:8px 12px; border-radius:10px;
+       background:var(--card); border:1px solid var(--border);}
+.lastData{font-size:12px; opacity:0.85; margin-top:6px;}
+.themeToggle{
+  padding:6px 10px; border-radius:6px; border:1px solid var(--border);
+  background:var(--card); cursor:pointer; font-size:14px;
+}
 
-  /* MONITÖRLER */
-  .grid{display:none;max-width:1200px;margin:14px auto;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 6px;}
-  @media(max-width:800px){.grid{grid-template-columns:1fr;}}
+/* LOGOUT BUTTON */
+#logoutBtn{
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid #d32f2f;
+  background:#ff5252;
+  color:white;
+  font-weight:600;
+  font-size:15px;
+  cursor:pointer;
+  display:flex; align-items:center; gap:6px;
+}
+#logoutBtn:hover{
+  background:#e53935;
+}
 
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);transform-origin:top;transform:scale(0.9);
-  }
-  .card:hover{transform:scale(0.94);}
-  .card-title{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;margin-bottom:8px;}
-  .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
+/* SUMMARY CARDS */
+.summary{
+  max-width:1200px; margin:8px auto;
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+}
+.sum-card{
+  background:var(--card); border:1px solid var(--border);
+  padding:12px 16px; border-radius:12px;
+  min-width:120px; text-align:center;
+}
+.sum-label{font-size:12px; opacity:.75;}
+.sum-val{font-size:18px; font-weight:700; margin-top:6px;}
 
-  .values-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
-  .val-box{text-align:center;flex:1;}
-  .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .val-label{font-size:12px;opacity:0.75;margin-top:4px;}
-  .tiny{font-size:12px;opacity:0.7;}
+/* MONITOR CARDS */
+.grid{
+  max-width:1200px; margin:14px auto;
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:16px; padding:0 6px;
+}
+@media(max-width:800px){.grid{grid-template-columns:1fr;}}
 
-  .flash-up{animation: flashGreen 420ms ease;} 
-  .flash-down{animation: flashRed 420ms ease;}
-  @keyframes flashGreen{0%{color:#00e676;}100%{color:inherit;}}
-  @keyframes flashRed{0%{color:#ff3b30;}100%{color:inherit;}}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  transform-origin:top; transform:scale(0.9);
+}
+.card:hover{transform:scale(0.94);}
+.card-title{display:flex; justify-content:space-between; align-items:center;
+            font-weight:700; font-size:15px; margin-bottom:8px;}
+.status-dot{
+  width:12px; height:12px; border-radius:50%; margin-left:8px;
+}
+.values-row{display:flex; justify-content:space-between; gap:10px; margin-bottom:8px;}
+.val-box{text-align:center; flex:1;}
+.val-num{font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px;}
+.val-label{font-size:12px; opacity:0.75; margin-top:4px;}
+.tiny{font-size:12px; opacity:0.7;}
+.flash-up{animation:flashGreen 420ms ease;}
+.flash-down{animation:flashRed 420ms ease;}
 
-  .status-text{font-size:13px;margin-top:6px;}
+@keyframes flashGreen{0%{color:#00e676; text-shadow:0 0 8px #00e676;}100%{color:inherit; text-shadow:none;}}
+@keyframes flashRed{0%{color:#ff3b30; text-shadow:0 0 8px #ff3b30;}100%{color:inherit; text-shadow:none;}}
+
+.status-text{font-size:13px; margin-top:6px;}
+.ic{width:16px; height:16px;}
+
+/* HIDE DASHBOARD INITIALLY */
+#dashboard{display:none;}
 </style>
 </head>
 <body>
 
-<!-- ============== LOGIN EKRANI ============== -->
-<div id="login-screen">
-  <div id="login-box">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png">
-    <h3>Giriş Yap</h3>
-
-    <input id="username" placeholder="Kullanıcı adı" autocomplete="off">
-
-    <div style="position:relative;">
-      <input id="password" type="password" placeholder="Şifre">
-      <span id="togglePass">👁</span>
-    </div>
-
-    <button onclick="login()">Giriş Yap</button>
-    <div id="login-error">Hatalı kullanıcı adı veya şifre!</div>
+<!-- =========================================================
+     LOGIN PAGE
+========================================================= -->
+<div id="loginPage">
+  <div id="loginBox">
+    <h2>Giriş Yap</h2>
+    <input id="user" class="loginInput" placeholder="Kullanıcı adı"/>
+    <input id="pass" type="password" class="loginInput" placeholder="Şifre"/>
+    <button id="loginBtn">Giriş Yap</button>
+    <div id="loginError"></div>
   </div>
 </div>
 
-<!-- ============== ANA ARAYÜZ ============== -->
-<div class="header" id="header">
+<!-- =========================================================
+     LOGOUT MODAL
+========================================================= -->
+<div id="logoutModal">
+  <div class="logoutBox">
+    <h3>🔐 Sistemden çıkılıyor...</h3>
+  </div>
+</div>
+
+<!-- =========================================================
+     DASHBOARD PAGE
+========================================================= -->
+<div id="dashboard">
+
+<div class="header">
   <div class="title">
     <div>Akıllı DC Güç Ünitesi</div>
     <div class="subtitle" id="globalStatusText">Bağlantı kontrol ediliyor...</div>
@@ -115,70 +228,104 @@ href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_Unive
     <div class="clock" id="realtimeClock">--:--:--</div>
     <button class="themeToggle" id="themeToggle">🌙</button>
 
-    <!-- Çıkış Butonu -->
+    <!-- Çıkış butonu -->
     <button id="logoutBtn">🚪 Çıkış</button>
+
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
+    </div>
   </div>
 </div>
 
-<div class="summary" id="summary">
+<div class="summary">
   <div class="sum-card"><div class="sum-label">Toplam Voltaj</div><div class="sum-val" id="sumV">0.0 V</div></div>
   <div class="sum-card"><div class="sum-label">Toplam Akım</div><div class="sum-val" id="sumA">0.00 A</div></div>
   <div class="sum-card"><div class="sum-label">Toplam Güç</div><div class="sum-val" id="sumW">0.0 W</div></div>
 </div>
 
 <div class="grid" id="grid"></div>
+</div>
 
 <script>
-/* ========== LOGIN ========= */
-const USER="smartsocketproject";
-const PASS="locationpassword81";
+/* =========================================================
+   LOGIN SYSTEM
+========================================================= */
+const VALID_USER = "smartsocketproject";
+const VALID_PASS = "locationpassword81";
+let attempts = 0;
+let blockedUntil = 0;
 
-document.getElementById("togglePass").onclick = () => {
-  const p = document.getElementById("password");
-  p.type = (p.type === "password" ? "text" : "password");
-};
-
-function login(){
-  let u=document.getElementById("username").value.trim();
-  let p=document.getElementById("password").value.trim();
-  if(u===USER && p===PASS){
-    document.getElementById("login-screen").style.display="none";
-    document.getElementById("header").style.display="flex";
-    document.getElementById("summary").style.display="flex";
-    document.getElementById("grid").style.display="grid";
-  } else {
-    document.getElementById("login-error").style.display="block";
-  }
+function showLoginError(msg){
+  document.getElementById("loginError").innerText = msg;
 }
 
-/* Çıkış */
-document.getElementById("logoutBtn").onclick = () =>{
-  alert("Sistemden çıkılıyor...");
-  location.reload();
+document.getElementById("loginBtn").onclick = () => {
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
+  const now = Date.now();
+
+  if(now < blockedUntil){
+    showLoginError("Çok fazla deneme! Lütfen 30 saniye bekleyin.");
+    return;
+  }
+
+  if(u === VALID_USER && p === VALID_PASS){
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("dashboard").style.display="block";
+    showLoginError("");
+    attempts = 0;
+    return;
+  }
+
+  attempts++;
+  if(attempts >= 3){
+    blockedUntil = now + 30000;
+    showLoginError("3 yanlış deneme! 30 saniye giriş engellendi.");
+  } else {
+    showLoginError("Hatalı kullanıcı adı veya şifre.");
+  }
 };
 
-/* ========== TEMA ========= */
-document.getElementById("themeToggle").onclick = () => {
+/* LOGOUT BUTTON */
+document.getElementById("logoutBtn").onclick = () => {
+  const modal = document.getElementById("logoutModal");
+  modal.classList.add("show");
+
+  setTimeout(()=>{
+    modal.classList.remove("show");
+    document.getElementById("dashboard").style.display="none";
+    document.getElementById("loginPage").style.display="flex";
+    document.getElementById("user").value="";
+    document.getElementById("pass").value="";
+  },1200);
+};
+
+/* =========================================================
+   DASHBOARD SCRIPT
+========================================================= */
+
+const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
+const OFFLINE_THRESHOLD=10000;
+let grid=document.getElementById("grid");
+let charts=[], lastReceived=[], lastGlobal=Date.now();
+
+/* Clock */
+setInterval(()=>{ document.getElementById("realtimeClock").innerText=new Date().toLocaleTimeString(); },1000);
+
+/* Theme Toggle */
+document.getElementById("themeToggle").onclick=()=>{
   document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText =
+  document.getElementById("themeToggle").innerText=
     document.body.classList.contains("dark") ? "☀️" : "🌙";
 };
 
-/* ========== GERÇEK ZAMAN SAAT ========= */
-setInterval(() => {
-  document.getElementById("realtimeClock").innerText =
-    new Date().toLocaleTimeString();
-}, 1000);
-
-/* ========== VERİ MONİTÖRLERİ ========= */
-const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
-let grid=document.getElementById("grid"), charts=[], lastReceived=[], lastTs=0;
-const OFFLINE_THRESHOLD=10000;
-
-/* Monitör kartları oluştur */
+/* Build Monitor Cards */
 for(let i=0;i<MON_NAMES.length;i++){
-  const html=`<div class="card">
-      <div class="card-title"><strong>${MON_NAMES[i]}</strong>
+  const id="mon"+i;
+  const html=`
+    <div class="card" id="${id}">
+      <div class="card-title">
+        <strong>${MON_NAMES[i]}</strong>
         <div id="dot${i}" class="status-dot" style="background:#f44;"></div>
       </div>
       <div class="values-row">
@@ -192,25 +339,26 @@ for(let i=0;i<MON_NAMES.length;i++){
       </div>
       <canvas id="chart${i}" height="110"></canvas>
     </div>`;
-  const wrap=document.createElement("div"); wrap.innerHTML=html;
-  grid.appendChild(wrap.firstElementChild);
+  const d=document.createElement("div");
+  d.innerHTML=html;
+  grid.appendChild(d.firstChild);
   lastReceived[i]=0;
 }
 
-/* Grafikler */
+/* Create charts */
 for(let i=0;i<MON_NAMES.length;i++){
-  charts[i]=new Chart(document.getElementById("chart"+i), {
-    type:"line",
+  const ctx=document.getElementById("chart"+i).getContext("2d");
+  charts[i]=new Chart(ctx,{
+    type:'line',
     data:{labels:[],datasets:[
-      {label:"Volt (V)", data:[], borderColor:"#1E90FF", backgroundColor:"rgba(30,144,255,0.06)", tension:0.25, pointRadius:0},
-      {label:"Akım (A)", data:[], borderColor:"#FF3B30", backgroundColor:"rgba(255,59,48,0.06)", tension:0.25, pointRadius:0},
-      {label:"Güç (W)",  data:[], borderColor:"#00C853", backgroundColor:"rgba(0,200,83,0.06)", tension:0.25, pointRadius:0}
+      {label:"Volt (V)", data:[], borderColor:"#1E90FF", tension:.25, pointRadius:0},
+      {label:"Akım (A)", data:[], borderColor:"#FF3B30", tension:.25, pointRadius:0},
+      {label:"Güç (W)", data:[], borderColor:"#00C853", tension:.25, pointRadius:0}
     ]},
     options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}
   });
 }
 
-/* Fade animasyonu */
 function flash(el,type){
   el.classList.remove("flash-up","flash-down");
   void el.offsetWidth;
@@ -218,50 +366,62 @@ function flash(el,type){
   setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
 }
 
-/* Timestamp format */
 function fmtTs(ts){
+  if(!ts) return "—";
   const d=new Date(ts);
   return d.toLocaleDateString()+" "+d.toLocaleTimeString();
 }
 
-/* WebSocket bağlantısı */
-const wsUrl=(location.protocol==="https:"?"wss:":"ws:")+"//"+location.host;
-const socket=new WebSocket(wsUrl);
+/* ---------------------------
+   WEBSOCKET
+---------------------------- */
+const protocol=(location.protocol==="https:")?"wss:":"ws:";
+const WS_URL=protocol+"//"+location.host;
+const socket=new WebSocket(WS_URL);
 
-socket.onmessage=(e)=>{
-  const msg=JSON.parse(e.data);
-  if(msg.type==="init"||msg.type==="update"){
-    lastTs=msg.ts;
-    document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
-    processData(msg.data||{});
-  } else if(msg.type==="offline"){
-    makeAllOffline();
-  }
-};
+let lastTs=0;
 
-/* Veri işleme */
-function processData(data){
+socket.addEventListener("message",(e)=>{
+  try{
+    const msg=JSON.parse(e.data);
+    if(msg.type==="init"||msg.type==="update"){
+      lastTs=msg.ts||Date.now();
+      document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
+      processData(msg.data||{});
+    }
+    else if(msg.type==="offline"){ makeAllOffline(); }
+  }catch(err){ console.error(err); }
+});
+
+/* ---------------------------
+   PROCESS DATA
+---------------------------- */
+function processData(obj){
   let totalV=0,totalA=0,totalW=0;
   let anyActive=false;
 
   for(let i=0;i<MON_NAMES.length;i++){
-    const d=data["monitor"+(i+1)]?.hat1;
-    const vEl=document.getElementById("v"+i),
-          aEl=document.getElementById("a"+i),
-          wEl=document.getElementById("w"+i),
-          tEl=document.getElementById("t"+i),
-          statEl=document.getElementById("stat"+i),
-          dotEl=document.getElementById("dot"+i),
-          ch=charts[i];
+    const d=obj["monitor"+(i+1)]?.hat1 || null;
+
+    const vEl=document.getElementById("v"+i);
+    const aEl=document.getElementById("a"+i);
+    const wEl=document.getElementById("w"+i);
+    const tEl=document.getElementById("t"+i);
+    const statEl=document.getElementById("stat"+i);
+    const dotEl=document.getElementById("dot"+i);
 
     if(!d){
       vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-";
       statEl.innerText="Bağlantı yok — kontrol edilmeli";
-      dotEl.style.background="#f33";
+      dotEl.style.background="red";
       continue;
     }
 
-    const v=d.voltage.value, a=d.current.value, w=d.power.value;
+    const v=d.voltage.value || 0;
+    const a=d.current.value || 0;
+    const w=d.power.value || 0;
+    const temp=d.temperature.value || 0;
+
     const oldV=parseFloat(vEl.innerText)||0;
     const oldA=parseFloat(aEl.innerText)||0;
     const oldW=parseFloat(wEl.innerText)||0;
@@ -269,7 +429,7 @@ function processData(data){
     vEl.innerText=v.toFixed(2);
     aEl.innerText=a.toFixed(3);
     wEl.innerText=w.toFixed(2);
-    tEl.innerText=d.temperature.value.toFixed(1);
+    tEl.innerText=temp.toFixed(1);
 
     flash(vEl,v>oldV?"up":"down");
     flash(aEl,a>oldA?"up":"down");
@@ -278,14 +438,15 @@ function processData(data){
     /* Enerji yok kontrolü */
     if(a < 0.005 || w < 0.05){
       statEl.innerText="Enerji yok ⚠️";
-      dotEl.style.background="#ff9800";
+      dotEl.style.background="#ffa726";
     } else {
       statEl.innerText="Bağlantı: Aktif";
       dotEl.style.background="#0f0";
       anyActive=true;
     }
 
-    /* Grafik */
+    /* Chart update */
+    const ch=charts[i];
     if(ch.data.labels.length>=30){
       ch.data.labels.shift();
       ch.data.datasets.forEach(ds=>ds.data.shift());
@@ -296,21 +457,23 @@ function processData(data){
     ch.data.datasets[2].data.push(w);
     ch.update("none");
 
-    totalV+=v; totalA+=a; totalW+=w;
+    totalV+=v;
+    totalA+=a;
+    totalW+=w;
+    lastReceived[i]=Date.now();
   }
 
   document.getElementById("sumV").innerText=totalV.toFixed(2)+" V";
   document.getElementById("sumA").innerText=totalA.toFixed(3)+" A";
   document.getElementById("sumW").innerText=totalW.toFixed(2)+" W";
 
-  // Global durum
-  const global=document.getElementById("globalStatusText");
-  if(anyActive) global.innerText="Bağlantı başarılı";
-  else if(Date.now()-lastTs>OFFLINE_THRESHOLD) global.innerText="Sistem ile iletişim yok";
-  else global.innerText="Bağlantı kontrol ediliyor...";
+  const g=document.getElementById("globalStatusText");
+  if(anyActive) g.innerText="Bağlantı başarılı";
+  else if(Date.now()-lastTs>OFFLINE_THRESHOLD) g.innerText="Sistem ile iletişim yok";
+  else g.innerText="Bağlantı kontrol ediliyor...";
 }
 
-/* Tüm monitörleri offline yap */
+/* OFFLINE HANDLER */
 function makeAllOffline(){
   for(let i=0;i<MON_NAMES.length;i++){
     document.getElementById("v"+i).innerText="-";
@@ -322,7 +485,8 @@ function makeAllOffline(){
   }
   document.getElementById("globalStatusText").innerText="Sistem ile iletişim yok";
 }
-</script>
 
+setInterval(()=>{ if(Date.now()-lastTs > OFFLINE_THRESHOLD) makeAllOffline(); },1000);
+</script>
 </body>
 </html>
