@@ -255,6 +255,28 @@ body.dark{
   cursor: pointer;
   font-weight: 600;
 }
+
+/* Yetkili cihaz görünümü */
+.deviceRow.trusted {
+  border-left: 3px solid #00c853;
+  background: rgba(0,200,83,0.10);
+}
+.trustedTag {
+  display:inline-block;
+  margin-left:6px;
+  padding:2px 6px;
+  border-radius:6px;
+  background:#00c853;
+  color:#fff;
+  font-size:11px;
+}
+.deviceRow.trusted button {
+  background:#9e9e9e;
+  cursor:not-allowed;
+}
+.locLine {
+  margin-top:2px;
+}
 </style>
 </head>
 <body>
@@ -529,7 +551,8 @@ async function openDevicesModal(){
   } else {
     list.forEach((s, idx)=>{
       const div = document.createElement("div");
-      div.className = "deviceRow";
+      const isTrusted = !!s.isTrusted; // server tarafında isTrusted bekleniyor
+      div.className = "deviceRow" + (isTrusted ? " trusted" : "");
 
       const createdStr = new Date(s.createdAt).toLocaleString();
       const mins = formatMins(s.remainMs);
@@ -537,19 +560,31 @@ async function openDevicesModal(){
       const shortUa = ua.length > 60 ? ua.slice(0,57) + "..." : ua;
 
       div.innerHTML = `
-        <div class="tiny"><strong>${idx+1}.</strong> ${shortUa}</div>
+        <div class="tiny">
+          <strong>${idx+1}.</strong> ${shortUa}
+          ${isTrusted ? '<span class="trustedTag">⭐ Yetkili Cihaz</span>' : ''}
+        </div>
         <div class="tiny">IP: ${s.ip || "-"} | Giriş: ${createdStr}</div>
+        <div class="tiny locLine" id="loc-${idx}">${s.ip ? "Konum: çözümleniyor..." : "Konum: -"}</div>
         <div class="tiny">Kalan süre: ~${mins} dk</div>
-        <button class="deviceLogoutBtn" data-token="${s.token}">Oturumu Sonlandır</button>
+        ${
+          isTrusted
+            ? '<button class="deviceLogoutBtn" data-token="'+s.token+'" disabled title="Yetkili cihaz oturumu sonlandırılamaz.">Sonlandırılamaz</button>'
+            : '<button class="deviceLogoutBtn" data-token="'+s.token+'">Oturumu Sonlandır</button>'
+        }
       `;
       container.appendChild(div);
     });
+
+    // IP → Ülke/Şehir çöz
+    resolveLocations(list);
   }
 
   document.getElementById("devicesModal").style.display = "flex";
 
   document.querySelectorAll(".deviceLogoutBtn").forEach(btn=>{
     btn.onclick = async ()=>{
+      if(btn.disabled) return; // Yetkili cihazı sonlandırma
       const targetToken = btn.getAttribute("data-token");
       const myToken = loadToken();
 
@@ -569,6 +604,33 @@ async function openDevicesModal(){
         openDevicesModal(); // listeyi tazele
       }
     };
+  });
+}
+
+/* IP'den ülke / şehir çözümü */
+function resolveLocations(sessions){
+  sessions.forEach((s, idx)=>{
+    const ip = s.ip;
+    if(!ip || ip === "-" || ip === "unknown") return;
+
+    fetch("https://ipapi.co/"+ip+"/json/")
+      .then(r => r.json())
+      .then(info=>{
+        const city = info.city || "";
+        const country = info.country_name || "";
+        const el = document.getElementById("loc-"+idx);
+        if(!el) return;
+
+        if(!city && !country){
+          el.textContent = "Konum: Bilinmiyor";
+        } else {
+          el.textContent = "Konum: " + [country, city].filter(Boolean).join(" / ");
+        }
+      })
+      .catch(()=>{
+        const el = document.getElementById("loc-"+idx);
+        if(el) el.textContent = "Konum: getirilemedi";
+      });
   });
 }
 
@@ -689,6 +751,7 @@ function processData(obj){
     const ch=charts[i];
 
     if(!d){
+      vEl.innerText=aEl.innerText=wEl.innerText+tEl.innerText="-";
       vEl.innerText=aEl.innerText=wEl.innerText=tEl.innerText="-";
       statEl.innerText="Bağlantı yok — kontrol edilmeli";
       dotEl.style.background="red";
