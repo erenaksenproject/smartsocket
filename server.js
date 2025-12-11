@@ -1,140 +1,42 @@
-// server.js
-import express from "express";
-import http from "http";
-import { WebSocketServer } from "ws";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const port = 3000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // HTML burada olacak
+app.use(bodyParser.json());
 
-// =====================================================
-//  AYAR SİSTEMİ (Kalıcı settings.json)
-// =====================================================
-const SETTINGS_FILE = path.join(__dirname, "settings.json");
+let latestData = { monitor1:null, monitor2:null, monitor3:null, monitor4:null, device:null };
 
-// Varsayılan ayarlar (dosya yoksa otomatik oluşur)
-const defaultSettings = {
+app.post('/api/data/post',(req,res)=>{
+  const data = req.body;
+  if(!data) return res.status(400).json({error:"Veri yok"});
+  latestData = data;
+  console.log("Telemetry received:",JSON.stringify(data,null,2));
+  res.json({status:"ok"});
+});
+
+app.get('/api/data/get',(req,res)=>res.json(latestData));
+
+let settings = {
   theme: "dark",
-  unitMode: "A_W", // A/W ya da mA/mW
-  monitorNames: [
-    "DC Soket Çıkışı 1",
-    "DC Soket Çıkışı 2",
-    "USB-A Portu 1",
-    "USB-A Portu 2"
-  ],
+  unitMode: "A_W",
+  monitorNames: ["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"],
   updateDelayWarn: true
 };
 
-// Ayar dosyasını yükle veya oluştur
-function loadSettings() {
-  try {
-    if (!fs.existsSync(SETTINGS_FILE)) {
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(defaultSettings, null, 2));
-      return defaultSettings;
-    }
-
-    const data = fs.readFileSync(SETTINGS_FILE, "utf8");
-    return JSON.parse(data);
-
-  } catch (err) {
-    console.error("Ayar yüklenemedi, varsayılanlar kullanıldı:", err);
-    return defaultSettings;
-  }
-}
-
-// Ayarları dosyaya kaydet
-function saveSettings(newSettings) {
-  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(newSettings, null, 2));
-}
-
-let settings = loadSettings();
-
-// Settings GET
-app.get("/api/settings/get", (req, res) => {
-  return res.json(settings);
+app.get('/api/settings/get',(req,res)=>res.json(settings));
+app.post('/api/settings/set',(req,res)=>{
+  const newSettings = req.body;
+  settings = {...settings,...newSettings};
+  console.log("Settings updated:",settings);
+  res.json({settings});
 });
 
-// Settings SET
-app.post("/api/settings/set", (req, res) => {
-  const payload = req.body;
-  settings = { ...settings, ...payload }; // Gelen değerleri üzerine yaz
-  saveSettings(settings);
-
-  // Tüm WebSocket istemcilere ayar güncelleme yayını
-  const msg = JSON.stringify({ type: "settings", settings });
-  wss.clients.forEach(client => {
-    if (client.readyState === 1) client.send(msg);
-  });
-
-  return res.json({ status: "saved", settings });
+app.post('/api/log',(req,res)=>{
+  console.log("Log:",req.body);
+  res.json({status:"ok"});
 });
 
-// =====================================================
-//  CANLI VERİ SİSTEMİ
-// =====================================================
-let lastData = {};
-let lastTimestamp = 0;
-
-// ESP8266 → POST JSON
-app.post("/api/data", (req, res) => {
-  const payload = req.body || {};
-  lastData = payload;
-  lastTimestamp = Date.now();
-
-  // WebSocket üzerinden frontend'e gönder
-  const msg = JSON.stringify({
-    type: "update",
-    data: lastData,
-    ts: lastTimestamp
-  });
-
-  wss.clients.forEach(client => {
-    if (client.readyState === 1) client.send(msg);
-  });
-
-  return res.status(200).json({ status: "ok" });
-});
-
-// Son veri isteyen istemciler için
-app.get("/api/last", (req, res) => {
-  return res.json({ data: lastData, ts: lastTimestamp });
-});
-
-// WebSocket bağlantısı
-wss.on("connection", (ws) => {
-  // İlk bağlanana hem veri hem ayarlar gönderiyoruz
-  ws.send(JSON.stringify({
-    type: "init",
-    data: lastData,
-    ts: lastTimestamp,
-    settings
-  }));
-});
-
-// 10 saniyeden uzun süre veri gelmezse offline bildir
-setInterval(() => {
-  if (Date.now() - lastTimestamp > 10000) {
-    const msg = JSON.stringify({
-      type: "offline",
-      ts: lastTimestamp
-    });
-
-    wss.clients.forEach(client => {
-      if (client.readyState === 1) client.send(msg);
-    });
-  }
-}, 3000);
-
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(port,()=>console.log(`Server çalışıyor http://localhost:${port}`));
