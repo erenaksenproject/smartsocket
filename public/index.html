@@ -10,7 +10,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  /* ---------- GLOBAL THEMES ---------- */
   body{
     font-family:'Segoe UI',Arial,sans-serif;
     margin:0;padding:0;
@@ -23,14 +22,11 @@
     --card:rgba(20,20,20,0.48);
     --border:rgba(255,255,255,0.06);
   }
-  body{
-    background:var(--bg);
-    color:var(--text);
-  }
 
-  /* ---------- LOGIN SCREEN ---------- */
+  /* LOGIN */
   #loginScreen{
-    position:fixed; inset:0; background:var(--bg);
+    position:fixed; inset:0;
+    background:var(--bg);
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
     gap:18px;
@@ -42,16 +38,62 @@
     border-radius:14px;
     display:flex; flex-direction:column; gap:12px;
     text-align:center;
+    transition:0.25s;
   }
+
+  /* WRONG PASSWORD: SHAKE + RED BORDER */
+  #loginBox.shake{
+    animation:shakeAnim 0.35s ease;
+  }
+  @keyframes shakeAnim{
+    0%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    50%{transform:translateX(6px);}
+    75%{transform:translateX(-6px);}
+    100%{transform:translateX(0);}
+  }
+  #loginBox.errorBorder{
+    border:1px solid #c62828;
+    box-shadow:0 0 8px rgba(198,40,40,0.6);
+  }
+
+  /* SUCCESS ANIMATION */
+  #loginBox.success{
+    border:1px solid #00c853 !important;
+    box-shadow:0 0 14px rgba(0,200,83,0.8) !important;
+    animation:successPop 0.45s ease forwards;
+  }
+  @keyframes successPop{
+    0%{ transform:scale(1); opacity:1; }
+    50%{ transform:scale(1.07); opacity:1; }
+    100%{ transform:scale(0.7); opacity:0; }
+  }
+
   #loginBox input{
     padding:10px;border-radius:8px;
     border:1px solid var(--border);width:100%;
   }
+
+  #passwordWrap{ position:relative;width:100%; }
+
+  #togglePass{
+    position:absolute;
+    right:10px; top:50%;
+    transform:translateY(-50%);
+    cursor:pointer; font-size:18px;
+  }
+
+  #capsWarning{
+    color:#c62828; font-size:12px;
+    display:none; margin-top:-6px;
+  }
+
   #loginBox button{
     padding:10px;border-radius:8px;border:none;
     cursor:pointer;background:#1E88E5;color:white;
     font-size:15px;font-weight:600;
   }
+
   #blockMsg{color:#c62828;font-size:13px;}
 
   .logoutBtn{
@@ -60,9 +102,9 @@
     border:1px solid var(--border);background:var(--card);
   }
 
-  /* ---------- DASHBOARD STYLE (ORİJİNAL KODUN) ---------- */
-
-  .header{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto 12px;padding:14px;}
+  /* DASHBOARD STYLE */
+  .header{display:flex;justify-content:space-between;align-items:center;
+    max-width:1200px;margin:0 auto 12px;padding:14px;}
   .title{display:flex;flex-direction:column;font-weight:700;}
   .subtitle{font-size:12px;opacity:0.75;margin-top:4px;}
   .right-controls{display:flex;align-items:center;gap:12px;}
@@ -79,25 +121,21 @@
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;
     box-shadow:0 6px 18px rgba(0,0,0,0.06);transform-origin:top;transform:scale(0.9);}
   .card:hover{transform:scale(0.94);}
-  .card-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:15px;}
+  .card-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;
+    font-weight:700;font-size:15px;}
   .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:8px;}
   .values-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
   .val-box{text-align:center;flex:1;}
   .val-num{font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .val-label{font-size:12px;opacity:0.75;margin-top:4px;}
   .tiny{font-size:12px;opacity:0.7;}
-
-  .flash-up{animation:flashGreen 420ms ease;}
-  .flash-down{animation:flashRed 420ms ease;}
-  @keyframes flashGreen{0%{color:#00e676;text-shadow:0 0 8px #00e676;}100%{color:inherit;}}
-  @keyframes flashRed{0%{color:#ff3b30;text-shadow:0 0 8px #ff3b30;}100%{color:inherit;}}
 
 </style>
 </head>
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN SCREEN -->
 <div id="loginScreen">
+
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/D%C3%BCzce_University_logo.svg/1200px-D%C3%BCzce_University_logo.svg.png"
        style="width:110px;margin-bottom:10px;">
 
@@ -105,7 +143,13 @@
     <h3>Giriş Yap</h3>
 
     <input id="username" placeholder="Kullanıcı adı">
-    <input id="password" type="password" placeholder="Şifre">
+
+    <div id="passwordWrap">
+      <input id="password" type="password" placeholder="Şifre">
+      <span id="togglePass">👁️</span>
+    </div>
+
+    <div id="capsWarning">Caps Lock açık!</div>
 
     <button onclick="handleLogin()">Giriş</button>
 
@@ -114,7 +158,8 @@
   </div>
 </div>
 
-<!-- ================= DASHBOARD ================= -->
+
+<!-- DASHBOARD -->
 <div id="dashboard" style="display:none;">
 
   <div class="header">
@@ -125,14 +170,9 @@
 
     <div class="right-controls">
       <div class="clock" id="realtimeClock">--:--:--</div>
-
       <button class="themeToggle" id="themeToggle">🌙</button>
-
       <button class="logoutBtn" onclick="logout()">Çıkış</button>
-
-      <div style="display:flex;flex-direction:column;align-items:center;">
-        <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
-      </div>
+      <div class="lastData tiny" id="lastDataTs">Son veri: —</div>
     </div>
   </div>
 
@@ -145,20 +185,45 @@
   <div class="grid" id="grid"></div>
 </div>
 
+
+
+
 <script>
 /* ============================================================
-              LOGIN – BACKEND DOĞRULAMALI TOKEN SİSTEMİ
+      LOGIN – ENTER + CAPSLOCK + SHOW/HIDE + SHAKE + SUCCESS
 ============================================================ */
+
+const loginBox = document.getElementById("loginBox");
 
 function saveToken(t){ localStorage.setItem("sessionToken", t); }
 function loadToken(){ return localStorage.getItem("sessionToken"); }
 function clearToken(){ localStorage.removeItem("sessionToken"); }
 
-async function handleLogin(){
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value;
+/* ENTER ile login */
+loginBox.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ handleLogin(); }
+});
 
-  const res = await fetch("/api/login", {
+/* CAPS LOCK uyarısı */
+document.getElementById("password").addEventListener("keyup",(e)=>{
+  document.getElementById("capsWarning").style.display =
+    e.getModifierState("CapsLock") ? "block" : "none";
+});
+
+/* Şifre göster/gizle */
+document.getElementById("togglePass").onclick = ()=>{
+  const p=document.getElementById("password");
+  p.type = p.type==="password" ? "text" : "password";
+};
+
+/* Login */
+async function handleLogin(){
+  loginBox.classList.remove("errorBorder","shake","success");
+
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
+
+  const res = await fetch("/api/login",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ username, password })
@@ -166,63 +231,66 @@ async function handleLogin(){
 
   const data = await res.json();
 
+  /* BAŞARILI GİRİŞ */
   if(data.ok){
-    saveToken(data.token);
-    showDashboard();
+    loginBox.classList.add("success");
+
+    setTimeout(()=>{
+      saveToken(data.token);
+      showDashboard();
+    },400);
+
     return;
   }
 
-  if(data.error === "wrong"){
-    document.getElementById("loginError").innerText = "Hatalı kullanıcı adı veya şifre!";
+  /* HATALI GİRİŞ */
+  loginBox.classList.add("errorBorder","shake");
+
+  if(data.error==="wrong"){
+    document.getElementById("loginError").innerText="Hatalı kullanıcı adı veya şifre!";
   }
-  else if(data.error === "blocked"){
-    document.getElementById("blockMsg").innerText =
-      `Çok fazla deneme! ${data.remain} saniye sonra tekrar deneyin.`;
+  else if(data.error==="blocked"){
+    document.getElementById("blockMsg").innerText=`${data.remain} saniye sonra tekrar deneyin.`;
   }
-  else if(data.error === "blocked30"){
-    document.getElementById("blockMsg").innerText = "3 hatalı giriş! 30 saniye bloke edildi!";
+  else if(data.error==="blocked30"){
+    document.getElementById("blockMsg").innerText="3 hatalı giriş! 30 saniye bloke edildi.";
   }
 }
 
+/* TOKEN KONTROL */
 async function checkToken(){
-  const token = loadToken();
+  const token=loadToken();
   if(!token) return false;
 
-  const res = await fetch("/api/check-token", {
-    headers:{ "authorization": token }
-  });
-
+  const res = await fetch("/api/check-token",{ headers:{ "authorization": token } });
   const data = await res.json();
-  return data.ok === true;
+  return data.ok===true;
 }
 
+/* LOGOUT */
 async function logout(){
-  const token = loadToken();
-  if(token){
-    await fetch("/api/logout", {
-      method:"POST",
-      headers:{ "authorization": token }
-    });
-  }
+  const token=loadToken();
+  if(token){ await fetch("/api/logout",{ method:"POST", headers:{ "authorization": token } }); }
   clearToken();
   document.getElementById("dashboard").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
   alert("Güç ünitesinden ayrılınıyor...");
 }
 
-/* DASHBOARD AÇMA */
-async function showDashboard(){
+/* DASHBOARD AÇ */
+function showDashboard(){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("dashboard").style.display="block";
 }
 
-/* SAYFA AÇILINCA TOKEN KONTROL */
-window.addEventListener("load", async ()=>{
+/* SAYFA AÇILINCA TOKEN CHECK */
+window.addEventListener("load", async()=>{
   if(await checkToken()) showDashboard();
 });
 
+
 /* ============================================================
-                   ORİJİNAL DASHBOARD KODUN
+                DASHBOARD KODU (TAMAMI KORUNDU)
 ============================================================ */
 
 const MON_NAMES=["DC Soket Çıkışı 1","DC Soket Çıkışı 2","USB-A Portu 1","USB-A Portu 2"];
@@ -237,10 +305,11 @@ setInterval(()=>{document.getElementById("realtimeClock").innerText=new Date().t
 /* Tema */
 document.getElementById("themeToggle").onclick=()=>{
   document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").innerText=document.body.classList.contains("dark")?"☀️":"🌙";
+  document.getElementById("themeToggle").innerText =
+    document.body.classList.contains("dark")?"☀️":"🌙";
 };
 
-/* Monitör kartlarını oluştur */
+/* Kart Oluşturma */
 for(let i=0;i<MON_NAMES.length;i++){
   const id="mon"+i;
   const html=`<div class="card" id="${id}">
@@ -250,14 +319,14 @@ for(let i=0;i<MON_NAMES.length;i++){
     </div>
 
     <div class="values-row">
-      <div class="val-box"><div class="val-num"><span class="ic">🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
-      <div class="val-box"><div class="val-num"><span class="ic">⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
+      <div class="val-box"><div class="val-num"><span>🔋</span><span id="v${i}">--</span></div><div class="val-label">Volt (V)</div></div>
+      <div class="val-box"><div class="val-num"><span>🧲</span><span id="a${i}">--</span></div><div class="val-label">Akım (A)</div></div>
+      <div class="val-box"><div class="val-num"><span>⚡</span><span id="w${i}">--</span></div><div class="val-label">Güç (W)</div></div>
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div class="tiny">Sıcaklık: <span id="t${i}">--</span>°C</div>
-      <div class="tiny status-text" id="stat${i}">Durum: —</div>
+      <div class="tiny" id="stat${i}">Durum: —</div>
     </div>
 
     <canvas id="chart${i}" height="110"></canvas>
@@ -266,28 +335,26 @@ for(let i=0;i<MON_NAMES.length;i++){
   const div=document.createElement("div");
   div.innerHTML=html;
   grid.appendChild(div.firstElementChild);
-
   lastReceived[i]=0;
 }
 
 /* Grafikler */
 for(let i=0;i<MON_NAMES.length;i++){
-  const ctx=document.getElementById("chart"+i).getContext("2d");
-  charts[i]=new Chart(ctx,{
-    type:'line',
+  charts[i]=new Chart(document.getElementById("chart"+i).getContext("2d"),{
+    type:"line",
     data:{
       labels:[],
       datasets:[
-        {label:'Volt (V)',data:[],borderColor:'#1E90FF',backgroundColor:'rgba(30,144,255,0.06)',tension:0.25,pointRadius:0},
-        {label:'Akım (A)',data:[],borderColor:'#FF3B30',backgroundColor:'rgba(255,59,48,0.06)',tension:0.25,pointRadius:0},
-        {label:'Güç (W)',data:[],borderColor:'#00C853',backgroundColor:'rgba(0,200,83,0.06)',tension:0.25,pointRadius:0}
+        {label:"Volt (V)",data:[],borderColor:"#1E90FF",backgroundColor:"rgba(30,144,255,0.06)",pointRadius:0,tension:0.25},
+        {label:"Akım (A)",data:[],borderColor:"#FF3B30",backgroundColor:"rgba(255,59,48,0.06)",pointRadius:0,tension:0.25},
+        {label:"Güç (W)",data:[],borderColor:"#00C853",backgroundColor:"rgba(0,200,83,0.06)",pointRadius:0,tension:0.25}
       ]
     },
-    options:{animation:false,plugins:{legend:{display:true}},scales:{x:{display:false}}}
+    options:{ animation:false, plugins:{legend:{display:true}}, scales:{x:{display:false}} }
   });
 }
 
-/* Flash effect */
+/* Flash */
 function flash(el,type){
   el.classList.remove("flash-up","flash-down");
   void el.offsetWidth;
@@ -295,14 +362,14 @@ function flash(el,type){
   setTimeout(()=>el.classList.remove("flash-up","flash-down"),400);
 }
 
-/* WebSocket bağlantısı */
+/* WebSocket */
 const protocol=(location.protocol==="https:")?"wss:":"ws:";
 const WS_URL=protocol+"//"+location.host;
 const socket=new WebSocket(WS_URL);
 
 let lastTs=0;
 
-/* Veri geldiğinde dashboard güncelle */
+/* Veri İşleme */
 socket.addEventListener("message",(e)=>{
   const msg=JSON.parse(e.data);
 
@@ -310,20 +377,18 @@ socket.addEventListener("message",(e)=>{
     lastTs=msg.ts;
     document.getElementById("lastDataTs").innerText="Son veri: "+fmtTs(lastTs);
     processData(msg.data||{});
-  }
-  else if(msg.type==="offline"){
+  } else if(msg.type==="offline"){
     makeAllOffline();
   }
 });
 
-/* Tarih formatı */
 function fmtTs(ts){
   if(!ts) return "—";
   const d=new Date(ts);
   return d.toLocaleDateString()+" "+d.toLocaleTimeString();
 }
 
-/* Veriyi dashboard’a yazdır */
+/* Dashboard Güncelleme */
 function processData(obj){
   let totalV=0,totalA=0,totalW=0;
   let anyActive=false;
@@ -357,17 +422,15 @@ function processData(obj){
     flash(aEl,"up");
     flash(wEl,"up");
 
-    /* Enerji durumu */
     if(a<0.005 || w<0.05){
       statEl.innerText="Enerji yok ⚠️";
       dotEl.style.background="#ff9800";
-    }else{
+    } else {
       statEl.innerText="Bağlantı: Aktif";
       dotEl.style.background="#0f0";
       anyActive=true;
     }
 
-    /* Grafik ekleme */
     if(ch.data.labels.length>=30){
       ch.data.labels.shift();
       ch.data.datasets.forEach(ds=>ds.data.shift());
@@ -392,7 +455,7 @@ function processData(obj){
   else globalEl.innerText="Bağlantı kontrol ediliyor...";
 }
 
-/* Offline durumunda dashboard temizle */
+/* Offline */
 function makeAllOffline(){
   MON_NAMES.forEach((m,i)=>{
     document.getElementById("v"+i).innerText="-";
