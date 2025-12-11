@@ -406,16 +406,34 @@ async function checkToken(){
 /* LOGOUT */
 let sessionTimer = null;
 async function logout(){
-  const token=loadToken();
+  const token = loadToken();
   if(token){
-    await fetch("/api/logout",{ method:"POST", headers:{ "authorization":token } });
+    await fetch("/api/logout",{
+      method:"POST",
+      headers:{ "authorization":token }
+    });
   }
+
   clearToken();
   if(sessionTimer) { clearInterval(sessionTimer); sessionTimer=null; }
+
+  // LOGIN BOX'u eski haline getir
+  loginBox.classList.remove("success", "errorBorder", "shake");
+  loginBox.style.opacity = "1";
+  loginBox.style.transform = "scale(1)";
+
+  // INPUT alanlarını temizle (güzel bir reset olsun)
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("loginError").innerText = "";
+  document.getElementById("blockMsg").innerText = "";
+
   document.getElementById("dashboard").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
+
   alert("Güç ünitesinden ayrılınıyor...");
 }
+
 
 /* DASHBOARD AÇ */
 function showDashboard(){
